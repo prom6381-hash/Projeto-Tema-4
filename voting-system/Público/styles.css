@@ -1,0 +1,91 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+#JTC {
+    text-align: center;
+    color: blue;
+    margin-top: 80px;
+}
+
+#JTC:hover {
+    color: rgba(0, 0, 255, 0.5);
+}
+
+
+.box {
+    text-align: center;
+    background-color: rgba(245, 254, 150, 0.8);
+    padding: 10px 40px 40px; /* só 10px no topo, mantém 40px nas laterais e em baixo */
+    border-radius: 10px;
+    width: 400px;
+    margin: 50px auto;
+    margin-top: 100px;
+}
+
+.voto-form{
+    text-align: left;
+    color: black;
+    margin-top: 20px;
+    font-size: 13px;
+}
+
+.voto-form  input{
+    display: wrap;
+}
+
+.login-form {
+    text-align: left;
+    color: black;
+    margin-top: 20px;
+    font-size: 13px;
+}
+
+.login-form label {
+    margin-bottom: -5px;
+    display: block;      /* labels em bloco para alinhamento */
+    font-weight: bold;   /* opcional: tornar labels mais visíveis */
+}
+
+input[type="text"], input[type="email"], input[type="password"] {
+    width: 100%;         /* largura total */
+    padding: 10px;       /* espaço interno */
+    margin-bottom: 15px; /* espaço entre inputs */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.login-button{
+    width: 100%;         /* botão largura total */
+    padding: 12px;       /* espaço interno */
+    background-color: #000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;    /* espaço acima do botão */
+}
+
+.login-button2{
+    width: 100%;         /* botão largura total */
+    padding: 12px;       /* espaço interno */
+    background-color: white;
+    color: black;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;    /* espaço acima do botão */
+}
+
+.login-button:hover {
+    background-color: #333;
+}
+
+.login-button2:hover {
+    background-color: rgb(211, 211, 211);
+}
+
