@@ -23,6 +23,9 @@ candidatos.forEach((nome, index) => {
 
 
 
+
+
+
 //criar_eleicao.html 
 
 // - Botão Adicionar Candidatos
