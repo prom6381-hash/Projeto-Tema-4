@@ -20,3 +20,15 @@ candidatos.forEach((nome, index) => {
         </div>
     `;
 });
+
+
+
+//criar_eleicao.html
+function adicionar_candidatos() {
+    const lista = document.getElementById('lista-candidatos'); 
+    const novaDiv = document.createElement('div');
+    novaDiv.style.marginTop = "10px";
+    novaDiv.innerHTML = `
+        <p>Nome do Candidato</p>
+        <input type="text" name="candidato">
+    `;

@@ -2,30 +2,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Criar Eleição</title>
-    <script src ="criar_eleicao.js" defer></script>
+    <link rel="stylesheet" href="style.css">
+    <title>Página Inicial</title>
 </head>
 <body>
-    <div>
+
+
+    <nav>
+        <img src="imagens/logo.png" alt="Logo" class="logo">
+        <h1>VotoSeguro</h1>
+    </nav>    
+
+    <div class="eleição">
         <h1>Criar Eleição</h1>
     
         <div>
             <p>Nome da Eleição</p>
             <input type="text">
         </div>
-        <div>
-            <p>Data de Início</p>
-            <input type="datetime-local">
+        
+        <div style="display: flex; gap: 300px; margin-left: 10%">
+
+            <div style="flex:1; " id="lista-candidatos">
+                <h3>Candidatos</h3>
+                <p>Nome do Candidato</p>
+                <input type="text" name="candidato">
+            </div>
+
+            <div style="flex: 1">
+                <p>Data de Início</p>
+                <input type="datetime-local">
+
+                <p>Data de Fim</p>
+                <input type="datetime-local">
+            </div>
+
+
         </div>
-        <div>
-            <p>Data de Fim</p>
-            <input type="datetime-local">
-        </div>
-        <h3>Candidatos</h3>
-        <div>
-            <p>Nome do Candidato</p>
-            <input type="text">
-        </div>
+
         <button onclick="adicionar_candidatos()">Adicionar candidato</button>
 
     </div>
