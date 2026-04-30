@@ -18,32 +18,38 @@
     
         <div>
             <p>Nome da Eleição</p>
-            <input type="text">
+            <input type="text" id="nome-eleicao">
         </div>
         
-        <div style="display: flex; gap: 300px; margin-left: 10%">
+        <div style="display: flex; gap: 160px;">
 
-            <div style="flex:1; " id="lista-candidatos">
-                <h3>Candidatos</h3>
-                <p>Nome do Candidato</p>
-                <input type="text" name="candidato">
+            <div style="flex:1;"">
+
+                <div id="lista-candidatos"> <!--Não coloquei no input porque para cada input teria um id diferente e iria repetir -->
+                        <h3>Candidatos</h3>
+                        <p style="margin-bottom: 3%">Nome do Candidato</p>
+                        <input type="text">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="Botão" style="flex: 1;; padding: 12px" onclick="adicionar_candidatos()">Adicionar candidato</button>
+                    <button class="Botão" style="flex: 1; padding: 12px;" onclick="remover_candidato()">Remover candidato</button>
+                </div>
             </div>
 
             <div style="flex: 1">
                 <p>Data de Início</p>
-                <input type="datetime-local">
+                <input type="datetime-local" id="data-inicio">
 
                 <p>Data de Fim</p>
-                <input type="datetime-local">
+                <input type="datetime-local" id="data-fim">
+            
             </div>
-
-
         </div>
 
-        <button onclick="adicionar_candidatos()">Adicionar candidato</button>
-
+        <button class="Botão" style="margin-top: 5%; margin-bottom: 5%" onclick="criar_eleicao()">Criar Eleição</button>
     </div>
+    <script src="server.js"></script>
 </body>
 </html>
 
-<!-- Isto é só para ter uma ideia, em termos de estrutura como vai ficar esta página do site-->
