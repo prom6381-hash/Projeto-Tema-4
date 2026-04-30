@@ -86,6 +86,7 @@ nav {
     border: none;
     border-radius: 20px;
     text-align: center; 
+    margin-bottom: 20px
 }
 
 .Botão:active {
