@@ -102,6 +102,13 @@ nav {
     margin: 0;
 }
 
+.iniciarS {
+    color: rgba(100, 102, 204, 1);
+    font-size: 20px;
+    margin-top: 10px;
+    text-decoration: none;
+    cursor: pointer;
+}
 
 /*criar_eleicao.html*/
 .eleição {
