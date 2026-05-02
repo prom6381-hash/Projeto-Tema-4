@@ -1,0 +1,4 @@
+environment:
+  - CA_PASSWORD=supersecurepassword
+volumes:
+  - ./backend/ca/certs:/app/certs
