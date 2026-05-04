@@ -87,6 +87,6 @@ async function pedir_token() {
 
 
 // Verificar token
-async function verificar_token() {
-    const email = document.getElementById('email').value;
-    const token = document.getElementById('token').value;
+//async function verificar_token() {
+ //   const email = document.getElementById('email').value;
+ //   const token = document.getElementById('token').value;
