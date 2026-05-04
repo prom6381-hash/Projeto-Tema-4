@@ -109,8 +109,20 @@ let tokens = {};
 
 const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
 
-// - Pedir token
+// - Pedir token - login
 
-app.post("/pedir-token", (req, res) => {
-    const { email } = req.body;
+//app.post("/login", (req, res) => {
+    //const { email } = req.body;
 
+    //if (!email) {
+    //    return res.status(400).json({ error: "Email é obrigatório" });
+    //}
+
+    const token = generateToken();
+    tokens[token] = { 
+        token: token,
+        email: email,
+        expiresAt: Date.now() + TOKEN_EXPIRATION_TIME
+    };
+
+    return res.json({ token });
