@@ -91,3 +91,26 @@ function criar_eleicao() {
 
     alert(`Eleição '${nomeEleicao}' criada com ${candidatos.length} candidatos de ${dataInicio} a ${dataFim}!`);
 }
+
+
+
+// Token para verificar email (Atutenticação)
+
+const express = require("express");
+const { generateToken } = require("./backend/utils/token");
+
+const app = express();
+
+app.use(express.json());
+
+//DEPOIS TEREMOS DE TROCAR PELO MONGO DB
+
+let tokens = {};
+
+const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
+
+// - Pedir token
+
+app.post("/pedir-token", (req, res) => {
+    const { email } = req.body;
+
