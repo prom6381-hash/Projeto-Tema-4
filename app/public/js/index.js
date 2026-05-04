@@ -1,29 +1,3 @@
-// O QUE COLOQUEI AQ É SÓ PARA SER USADO NO FUTURO AINDA N ESTÁ A FUNCIONAR
-
-const nome = "Tiago"; // Um exemplo qualquer
-const elemento = document.getElementById('mensagem-autenticado');
-
-elemento.innerHTML = `Utilizador ${nome} Autenticado ✅`;
-
-
-
-const candidatos = ["Candidato A", "Candidato B"]; // Isto viria do utilizador
-
-const lista = document.getElementById('lista-candidatos');
-
-candidatos.forEach((nome, index) => {
-    lista.innerHTML += `
-        <div class="card-voto" onclick="selecionar(${index})">
-            <span>👤</span>
-            <span>${nome}</span>
-            <input type="checkbox" id="check-${index}">
-        </div>
-    `;
-});
-
-
-
-
 
 
 //criar_eleicao.html 
@@ -91,3 +65,28 @@ function criar_eleicao() {
 
     alert(`Eleição '${nomeEleicao}' criada com ${candidatos.length} candidatos de ${dataInicio} a ${dataFim}!`);
 }
+
+
+
+// Pedir token - login
+
+async function pedir_token() {
+    const email = document.getElementById('email').value;
+    if (email.trim() === "") {
+        alert("Por favor, insira o email.");
+        return;
+    }
+    const response = await fetch("http://localhost:3000/login", {   //esperar que será enviado para o backend
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },    
+        body: JSON.stringify({ email })
+    });
+    const data = await response.json();
+    alert(data.message);
+} // email → fetch → backend (/login) → gera token → envia email → resposta → alert
+
+
+// Verificar token
+async function verificar_token() {
+    const email = document.getElementById('email').value;
+    const token = document.getElementById('token').value;

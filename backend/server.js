@@ -2,9 +2,9 @@
 // Token para verificar email (Atutenticação)
 
 const express = require("express");
-const { generateToken } = require("./backend/utils/token");
-const { sendTokenEmail } = require("./backend/utils/email");
-const { hashToken } = require("./backend/utils/hmac");
+const { generateToken } = require("./utils/token");
+const { sendTokenEmail } = require("./utils/email");
+const { hashToken } = require("./utils/hmac");
 
 
 const app = express();
@@ -48,3 +48,40 @@ app.post("/login", async (req, res) => {
 
 // Verificar token
 
+app.post("/verify-token", (req, res) => {
+    const { email, token } = req.body;
+    if (!email || !token) {
+        return res.status(400).json({ error: "Email e token são obrigatórios" });
+    }
+
+    // Verificar se o token é válido
+    const tokenData = tokens[email];
+    if (!tokenData) {
+        return res.status(400).json({ error: "Token inválido ou expirado" });
+    }
+
+    // Verificar se o token ainda é válido
+    if (Date.now() > tokenData.expiresAt) {
+        delete tokens[email];
+        return res.status(400).json({ error: "Token expirado" });
+    }
+
+    // Verificar se o hash do token corresponde
+    const tokenHash = hashToken(token, email);
+    if (tokenHash !== tokenData.tokenHash) {
+        return res.status(400).json({ error: "Token inválido" });
+    }
+
+    // Remover o token após verificação
+    delete tokens[email];
+
+    return res.json({ message: "Autenticado com sucesso" });
+});
+
+
+//arrancar server
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor a correr na porta ${PORT}`);
+});
