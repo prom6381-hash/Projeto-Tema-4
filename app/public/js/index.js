@@ -102,6 +102,9 @@ function criar_eleicao() {
 
 const express = require("express");
 const { generateToken } = require("./backend/utils/token");
+const { sendTokenEmail } = require("./backend/utils/email");
+const { hashToken } = require("./backend/utils/hmac");
+
 
 const app = express();
 
@@ -122,14 +125,21 @@ app.post("/login", async (req, res) => {
         return res.status(400).json({ error: "Email é obrigatório" });
     }
 
+    //token.js criar token
     const token = generateToken();
 
-    tokens[token] = { 
-        token,
+    //hmac.js criar hash do token
+
+    const tokenHash = hashToken(token, email);
+
+    //isto se calhar vai ser alterado quando usarmos mongo db, mas por agora vamos guardar o token e o email num objeto em memória
+    tokens[email] = { 
+        tokenHash,
         expiresAt: Date.now() + TOKEN_EXPIRATION_TIME
     };
 
     await sendTokenEmail(email, token);
 
     return res.json({  message: "Token gerado e enviado"
+    });
 });
