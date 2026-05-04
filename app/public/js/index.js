@@ -94,6 +94,10 @@ function criar_eleicao() {
 
 
 
+
+
+
+
 // Token para verificar email (Atutenticação)
 
 const express = require("express");
@@ -111,18 +115,21 @@ const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
 
 // - Pedir token - login
 
-//app.post("/login", (req, res) => {
-    //const { email } = req.body;
+app.post("/login", async (req, res) => {
+    const { email } = req.body;
 
-    //if (!email) {
-    //    return res.status(400).json({ error: "Email é obrigatório" });
-    //}
+    if (!email) {
+        return res.status(400).json({ error: "Email é obrigatório" });
+    }
 
     const token = generateToken();
+
     tokens[token] = { 
-        token: token,
-        email: email,
+        token,
         expiresAt: Date.now() + TOKEN_EXPIRATION_TIME
     };
 
-    return res.json({ token });
+    await sendTokenEmail(email, token);
+
+    return res.json({  message: "Token gerado e enviado"
+});
