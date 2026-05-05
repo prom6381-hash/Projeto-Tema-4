@@ -1,5 +1,6 @@
 const mondoose = require('mongoose');
 
+// Esquema para armazenar tokens de autenticação na BD
 const TokenSchema = new mondoose.Schema({
     email: { type: String, required: true, index: true }, // Índice para consultas rápidas
     tokenHash: { type: String, required: true },

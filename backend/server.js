@@ -57,8 +57,9 @@ app.post("/verify-token", (req, res) => {
         return res.status(400).json({ error: "Email e token são obrigatórios" });
     }
 
-    // Verificar se o token é válido
     const tokenData = await Token.findOne({ email });
+
+    // Verificar se o token é válido 
     if (!tokenData) {
         return res.status(400).json({ error: "Token inválido ou expirado" });
     }
@@ -71,6 +72,7 @@ app.post("/verify-token", (req, res) => {
 
     // Verificar se o hash do token corresponde
     const tokenHash = hashToken(token, email);
+    
     if (tokenHash !== tokenData.tokenHash) {
         return res.status(400).json({ error: "Token inválido" });
     }
