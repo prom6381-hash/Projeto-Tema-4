@@ -1,7 +1,7 @@
 FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
+WORKDIR /app/backend
+COPY backend/package*.json ./
 RUN npm install
-COPY . .
+COPY backend ./
 EXPOSE 3000
 CMD ["node","server.js"]
