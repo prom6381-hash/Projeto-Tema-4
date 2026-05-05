@@ -11,7 +11,7 @@ app.use(express.json());
 
 const path = require("path");
 
-app.use(express.static(path.join(__dirname, "../public"))); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
+app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
 
 
 const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
