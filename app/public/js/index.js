@@ -76,6 +76,7 @@ async function pedir_token() {
         alert("Por favor, insira o email.");
         return;
     }
+    
     const response = await fetch("http://localhost:3000/login", {   //esperar que será enviado para o backend
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },    
