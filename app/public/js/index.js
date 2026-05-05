@@ -71,7 +71,9 @@ function criar_eleicao() {
 // Pedir token - login
 
 async function pedir_token() {
+
     const email = document.getElementById('email').value;
+
     if (email.trim() === "") {
         alert("Por favor, insira o email.");
         return;
@@ -80,7 +82,7 @@ async function pedir_token() {
     const response = await fetch("http://localhost:3000/login", {   //esperar que será enviado para o backend
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },    
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email }) // email: "XXXX@gmail.com" 
     });
     const data = await response.json();
     alert(data.message);
