@@ -1,4 +1,64 @@
-environment:
-  - CA_PASSWORD=supersecurepassword
-volumes:
-  - ./backend/ca/certs:/app/certs
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: interface-web
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - BACKEND_URL=http://backend:4000
+    volumes:
+      - ./app/public:/app/public
+    networks:
+      - network_sistema_todo
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    depends_on:
+      - servidor_CA
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - CA_HOST=servidor_CA
+      - CA_PORT=5000
+      - PORT=4000
+      - JWT_SECRET=${JWT_SECRET}
+      - HMAC_SECRET=${HMAC_SECRET}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+    volumes:
+      - ./backend:/app/backend
+      - ./app/base_de_dados.js:/app/base_de_dados.js
+    networks:
+      - network_sistema_todo
+
+  servidor_CA:
+    build:
+      context: ./servidor_CA
+      dockerfile: Dockerfile
+    container_name: servidor_criptografia
+    ports:
+      - "5000:5000"
+    environment:
+      - CA_CERT=/app/ca_cert.pem
+      - CA_KEY=/app/ca_key.pem
+    volumes:
+      - ./servidor_CA:/app
+    networks:
+      - network_sistema_todo
+
+networks:
+  network_sistema_todo:
+    driver: bridge
+
+#Se precisarem, alterem o código !!
