@@ -1,6 +1,5 @@
 // AUTENTICAÇÃO via email usando tokens de uso único
 // Token para verificar email (Atutenticação)
-
 const express = require("express");
 const { generateToken } = require("./utils/token");
 const { sendTokenEmail } = require("./utils/email");
@@ -9,6 +8,8 @@ const Token = require("./models/Token");
 const app = express();
 
 app.use(express.json());
+
+app.use(express.static("public")); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
 
 
 const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
