@@ -12,9 +12,6 @@ const app = express();
 
 app.use(express.json());
 
-//DEPOIS TEREMOS DE TROCAR PELO MONGO DB
-
-let tokens = {};
 
 const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
 
@@ -41,8 +38,7 @@ app.post("/login", async (req, res) => {
     await Token.findOneAndUpdate(
         { email },
         { tokenHash, expiresAt },
-        { upsert: true, new: true },
-        { upperset: true , new: true } //se não existir, cria um novo documento e retorna o documento atualizado ou criado
+        { upsert: true, new: true },  //se não existir, cria um novo documento e retorna o documento atualizado ou criado
     );
 
     await sendTokenEmail(email, token);
@@ -56,12 +52,13 @@ app.post("/login", async (req, res) => {
 
 app.post("/verify-token", (req, res) => {
     const { email, token } = req.body;
+
     if (!email || !token) {
         return res.status(400).json({ error: "Email e token são obrigatórios" });
     }
 
     // Verificar se o token é válido
-    const tokenData = ;
+    const tokenData = await Token.findOne({ email });
     if (!tokenData) {
         return res.status(400).json({ error: "Token inválido ou expirado" });
     }
