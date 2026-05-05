@@ -1,4 +1,4 @@
-
+// AUTENTICAÇÃO via email usando tokens de uso único
 // Token para verificar email (Atutenticação)
 
 const express = require("express");
@@ -6,8 +6,6 @@ const { generateToken } = require("./utils/token");
 const { sendTokenEmail } = require("./utils/email");
 const { hashToken } = require("./utils/hmac");
 const Token = require("./models/Token");
-const { upperCase } = require("lodash");
-
 const app = express();
 
 app.use(express.json());
@@ -33,7 +31,7 @@ app.post("/login", async (req, res) => {
 
     //usar mongodb para guardar o token
 
-    const expiresAt = Date.now() + TOKEN_EXPIRATION_TIME;
+    const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_TIME); //new Date(), pois esta não transforma em string e no formato correto
 
     await Token.findOneAndUpdate(
         { email },
@@ -50,7 +48,7 @@ app.post("/login", async (req, res) => {
 
 // Verificar token
 
-app.post("/verify-token", (req, res) => {
+app.post("/verify-token", async(req, res) => {  //async porque vamos usar await para operações assíncronas (acesso à base de dados)
     const { email, token } = req.body;
 
     if (!email || !token) {
@@ -66,19 +64,19 @@ app.post("/verify-token", (req, res) => {
 
     // Verificar se o token ainda é válido
     if (Date.now() > tokenData.expiresAt) {
-        delete tokens[email];
+        await Token.deleteOne({ email }); // deleteOne é um comando do mongoose
         return res.status(400).json({ error: "Token expirado" });
     }
 
     // Verificar se o hash do token corresponde
     const tokenHash = hashToken(token, email);
-    
+
     if (tokenHash !== tokenData.tokenHash) {
         return res.status(400).json({ error: "Token inválido" });
     }
 
     // Remover o token após verificação
-    delete tokens[email];
+    await Token.deleteOne({ email });
 
     return res.json({ message: "Autenticado com sucesso" });
 });
@@ -90,3 +88,14 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor a correr na porta ${PORT}`);
 });
+
+
+
+
+
+
+
+
+
+// Realizar VOTO ou CRIAR VOTAÇÃO (TOKENS)
+
