@@ -5,7 +5,8 @@ const express = require("express");
 const { generateToken } = require("./utils/token");
 const { sendTokenEmail } = require("./utils/email");
 const { hashToken } = require("./utils/hmac");
-
+const Token = require("./models/Token");
+const { upperCase } = require("lodash");
 
 const app = express();
 
@@ -33,11 +34,16 @@ app.post("/login", async (req, res) => {
 
     const tokenHash = hashToken(token, email);
 
-    //isto se calhar vai ser alterado quando usarmos mongo db, mas por agora vamos guardar o token e o email num objeto em memória
-    tokens[email] = { 
-        tokenHash,
-        expiresAt: Date.now() + TOKEN_EXPIRATION_TIME
-    };
+    //usar mongodb para guardar o token
+
+    const expiresAt = Date.now() + TOKEN_EXPIRATION_TIME;
+
+    await Token.findOneAndUpdate(
+        { email },
+        { tokenHash, expiresAt },
+        { upsert: true, new: true },
+        { upperset: true , new: true } //se não existir, cria um novo documento e retorna o documento atualizado ou criado
+    );
 
     await sendTokenEmail(email, token);
 
@@ -55,7 +61,7 @@ app.post("/verify-token", (req, res) => {
     }
 
     // Verificar se o token é válido
-    const tokenData = tokens[email];
+    const tokenData = ;
     if (!tokenData) {
         return res.status(400).json({ error: "Token inválido ou expirado" });
     }
