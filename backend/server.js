@@ -2,20 +2,19 @@
 // Token para verificar email (Atutenticação)
 require("dotenv").config();
 const express = require("express");
+const path = require("path");
 const { generateToken } = require("./utils/token");
 const { sendTokenEmail } = require("./utils/email");
 const { hashToken } = require("./utils/hmac");
 const Token = require("./models/Token");
+const app = express();
 
-const path = require("path");
-console.log("SECRET_KEY:", process.env.SECRET_KEY);
 app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
 
 
 
 const connectDB = require("./base_de_dados.js");
 connectDB();
-const app = express();
 app.use(express.json());
 
 const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
