@@ -1,5 +1,10 @@
+//index.html 
 
-//criar_eleicao.html 
+
+
+
+
+//criar_eleicao.html
 
 // - Botão Adicionar Candidatos
 function adicionar_candidatos() {
@@ -91,6 +96,7 @@ async function ver_eleicoes(){
             nome.textContent=exibir.nome;
             exibir.appendChild(nome);
 
+<<<<<<< HEAD
             const dataComeco= new Date(exibir.dataInicio).toLocaleDateString("pt-PT");
             const dataAcaba= new Date(exibir.dataFim).toLocaleDateString("pt-PT");
 
@@ -152,19 +158,21 @@ async function pedir_token() {
     window.location.href = "verificar_token.html"; //redirecionar para a página de verificação do token
 } // email → fetch → backend (/login) → gera token → envia email → resposta → alert
 
+=======
+>>>>>>> 68e1d563e91e25bd133590aef9e50b7d8e7bebb9
 
 // Verificar token
 async function verificar_token() {
-    const email = localStorage.getItem("email");
-    const token = document.getElementById('token').value;
+    const { email, tokenType } = getQueryParams();
+    const token = document.getElementById("token").value;
 
-    if (!email) {
-        alert("Email não encontrado. Por favor, faça login novamente.");
+    if (!email || !tokenType) {
+        alert("Sessão inválida. Volta ao início.");
         window.location.href = "index.html";
         return;
     }   
 
-    if (token.trim() === "") {
+    if (!token || token.trim() === "") {
         alert("Por favor, insira o token.");
         return;
     }
@@ -172,16 +180,139 @@ async function verificar_token() {
     const response = await fetch("/verify-token", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, token })
+        body: JSON.stringify({ email, token, tokenType })
     });
 
     const data = await response.json();
-    
+
     if (response.ok) { // se a resposta for 200 - 299: sucesso 
         alert(data.message);
-        window.location.href = "votar_ou_criar.html"; //redirecionar para a página de votação ou criação de eleição
+    
+        if (tokenType === "register" || tokenType === "login") {
+        window.location.href = "votar_ou_criar.html";
+    }
+
+        else if (tokenType === "vote") {
+        window.location.href = "votar.html"; 
+    }
+
+        else if (tokenType === "create") {
+        window.location.href = "criar_eleicao.html"; 
+    }
+
+    else {
+        alert(data.error);
+        }
+    }
+}
+
+
+
+async function pedirToken(tipo) {
+    const email = document.getElementById("email").value;
+
+    if (!email || email.trim() === "") {
+        alert("Por favor, insere o email.");
+        return;
+    }
+
+    const res = await fetch("/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            email,
+            tokenType: tipo
+        })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        alert(data.message);
+
+        // redireciona com dados na URL (sem localStorage)
+        window.location.href =
+            "verificar_token.html?type=" + tipo +
+            "&email=" + encodeURIComponent(email);
+
     } else {
         alert(data.error);
     }
-}   
+}
 
+
+function token_login() {
+    pedirToken("login");
+}
+
+function token_registar() {
+    pedirToken("register");
+}
+
+function token_votar() {
+    pedirToken("vote");
+}
+
+function token_criar_eleicao() {
+    pedirToken("create");
+}
+
+
+function getQueryParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        email: params.get("email"),
+        tokenType: params.get("type")
+    };
+}
+
+
+async function verificar_token() {
+    const { email, tokenType } = getQueryParams();
+    const token = document.getElementById("token").value;
+
+    if (!email || !tokenType) {
+        alert("Sessão inválida. Volta ao início.");
+        window.location.href = "index.html";
+        return;
+    }
+
+    if (!token || token.trim() === "") {
+        alert("Por favor, insere o token.");
+        return;
+    }
+
+    const response = await fetch("/verify-token", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            email,
+            token,
+            tokenType
+        })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        alert(data.message);
+
+        // redirecionamento baseado no tipo
+        if (tokenType === "login" || tokenType === "register") {
+            window.location.href = "votar_ou_criar.html";
+        }
+        else if (tokenType === "vote") {
+            window.location.href = "votar.html";
+        }
+        else if (tokenType === "create") {
+            window.location.href = "criar_eleicao.html";
+        }
+
+    } else {
+        alert(data.error);
+    }
+}
