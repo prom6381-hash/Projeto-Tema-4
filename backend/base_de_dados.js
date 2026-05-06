@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const MONGO_URI = "mongodb://localhost:27017/votoseguro";
+const MONGO_URI = "mongodb://mongo:27017/votoseguro";
 
 const connectDB = async () => {
   try {

@@ -62,4 +62,11 @@ networks:
   network_sistema_todo:
     driver: bridge
 
+mongo:
+  image: mongo:6
+  container_name: mongo
+  ports:
+    - "27017:27017"
+  networks:
+    - network_sistema_todo
 #Se precisarem, alterem o código !!
