@@ -93,7 +93,7 @@ async function pedir_token() {
 
 // Verificar token
 async function verificar_token() {
-    const email = document.getElementById('email').value;
+    const email = localStorage.getItem("email");
     const token = document.getElementById('token').value;
     if (token.trim() === "") {
         alert("Por favor, insira o token.");
@@ -106,7 +106,7 @@ async function verificar_token() {
         body: JSON.stringify({ email, token })
     });
     const data = await response.json();
-    if (response.ok) {
+    if (response.ok) { // se a resposta for 200 - 299: sucesso 
         alert(data.message);
         window.location.href = "votar_ou_criar.html"; //redirecionar para a página de votação ou criação de eleição
     } else {
