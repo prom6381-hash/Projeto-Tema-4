@@ -57,6 +57,11 @@ app.post("/login", async (req, res) => {
 app.post("/verify-token", async(req, res) => {  //async porque vamos usar await para operações assíncronas (acesso à base de dados)
     const { email, token } = req.body;
 
+
+    if (!email || !token) {
+        return res.status(400).json({ error: "Email e token são obrigatórios" });
+    }
+    
     const tokenData = await Token.findOne({ email });
 
     // Verificar se o token é válido 

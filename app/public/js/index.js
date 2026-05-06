@@ -95,6 +95,13 @@ async function pedir_token() {
 async function verificar_token() {
     const email = localStorage.getItem("email");
     const token = document.getElementById('token').value;
+
+    if (!email) {
+        alert("Email não encontrado. Por favor, faça login novamente.");
+        window.location.href = "index.html";
+        return;
+    }   
+
     if (token.trim() === "") {
         alert("Por favor, insira o token.");
         return;
@@ -105,7 +112,9 @@ async function verificar_token() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, token })
     });
+
     const data = await response.json();
+    
     if (response.ok) { // se a resposta for 200 - 299: sucesso 
         alert(data.message);
         window.location.href = "votar_ou_criar.html"; //redirecionar para a página de votação ou criação de eleição
