@@ -58,7 +58,14 @@ services:
       - ./servidor-ca/certificados:/app/certs
     networks:
       - network_sistema_todo
-
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - network_sistema_todo
+      
 networks:
   network_sistema_todo:
     driver: bridge
