@@ -1,5 +1,20 @@
+//index.html 
 
-//criar_eleicao.html 
+// login
+function token_login() {
+    localStorage.setItem("tokenType", "login"); //guardar o tipo como login para usar depois na verificação do token
+    window.location.href = "pedir_token.html"; //redirecionar para a página de pedir token
+}
+
+//registar 
+
+function token_registar() {
+    localStorage.setItem("tokenType", "register"); //guardar o tipo como register para usar depois na verificação do token
+    window.location.href = "pedir_token.html"; //redirecionar para a página de pedir token
+}
+
+
+//criar_eleicao.html
 
 // - Botão Adicionar Candidatos
 function adicionar_candidatos() {
@@ -67,7 +82,7 @@ function criar_eleicao() {
 
 
 
-// Pedir token - login
+// Pedir token - LOGIN
 
 async function pedir_token() {
 
@@ -95,6 +110,7 @@ async function pedir_token() {
 async function verificar_token() {
     const email = localStorage.getItem("email");
     const token = document.getElementById('token').value;
+    const tokenType = localStorage.getItem("tokenType"); //recuperar o tipo do token para usar na verificação
 
     if (!email) {
         alert("Email não encontrado. Por favor, faça login novamente.");
@@ -110,16 +126,22 @@ async function verificar_token() {
     const response = await fetch("/verify-token", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, token })
+        body: JSON.stringify({ email, token, tokenType })
     });
 
     const data = await response.json();
-    
+
     if (response.ok) { // se a resposta for 200 - 299: sucesso 
         alert(data.message);
         window.location.href = "votar_ou_criar.html"; //redirecionar para a página de votação ou criação de eleição
     } else {
         alert(data.error);
     }
-}   
 
+    if (response.ok) {
+        localStorage.removeItem("email");
+        localStorage.removeItem("tokenType");
+    }
+
+    if 
+}

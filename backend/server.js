@@ -41,7 +41,7 @@ app.post("/login", async (req, res) => {
 
     await Token.findOneAndUpdate(
         { email },
-        { tokenHash, expiresAt },
+        { tokenHash, expiresAt, type: "login" },
         { upsert: true, new: true },  //se não existir, cria um novo documento e retorna o documento atualizado ou criado
     );
 
@@ -55,7 +55,7 @@ app.post("/login", async (req, res) => {
 // Verificar token
 
 app.post("/verify-token", async(req, res) => {  //async porque vamos usar await para operações assíncronas (acesso à base de dados)
-    const { email, token } = req.body;
+    const { email, token, tokenType } = req.body;
 
 
     if (!email || !token) {
@@ -64,15 +64,22 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
     
     const tokenData = await Token.findOne({ email });
 
+
     // Verificar se o token é válido 
     if (!tokenData) {
         return res.status(400).json({ error: "Token inválido ou expirado" });
     }
+    
 
     // Verificar se o token ainda é válido
     if (Date.now() > tokenData.expiresAt) {
         await Token.deleteOne({ email }); // deleteOne é um comando do mongoose
         return res.status(400).json({ error: "Token expirado" });
+    }
+
+    // Verificar se o tipo do token corresponde
+    if (tokenData.type !== tokenType) {
+        return res.status(400).json({ error: "Tipo de token inválido" });
     }
 
     // Verificar se o hash do token corresponde
