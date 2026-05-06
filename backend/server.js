@@ -59,7 +59,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
     const { email, token, tokenType } = req.body;
 
 
-    if (!email || !token) {
+    if (!email || !token || !tokenType) {
         return res.status(400).json({ error: "Email e token são obrigatórios" });
     }
     
@@ -121,7 +121,10 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
         return res.json({ message: "Token de criação verificado com sucesso" });
     }
 
-    if (!tokenType === "register" && tokenType !== "login" && tokenType !== "vote" && tokenType !== "create") {
+    if (tokenType !== "register" && 
+        tokenType !== "login" && 
+        tokenType !== "vote" && 
+        tokenType !== "create") {
         return res.status(400).json({ error: "Tipo de token inválido" });
     }
 
