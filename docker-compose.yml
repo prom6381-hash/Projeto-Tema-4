@@ -22,12 +22,12 @@ services:
       dockerfile: Dockerfile
     container_name: backend
     depends_on:
-      - servidor_CA
+      - servidor_ca
     ports:
       - "4000:4000"
     environment:
       - NODE_ENV=development
-      - CA_HOST=servidor_CA
+      - CA_HOST=servidor_ca
       - CA_PORT=5000
       - PORT=4000
       - JWT_SECRET=${JWT_SECRET}
@@ -42,9 +42,9 @@ services:
     networks:
       - network_sistema_todo
 
-  servidor_CA:
+  servidor_ca:
     build:
-      context: ./servidor_CA
+      context: ./servidor_ca
       dockerfile: Dockerfile
     container_name: servidor_criptografia
     ports:
@@ -53,8 +53,8 @@ services:
       - CA_CERT=/app/ca_cert.pem
       - CA_KEY=/app/ca_key.pem
     volumes:
-      - ./servidor_CA:/app
-      - ./servidor_CA/certificados:/app/certs
+      - ./servidor_ca:/app
+      - ./servidor_ca/certificados:/app/certs
     networks:
       - network_sistema_todo
 
