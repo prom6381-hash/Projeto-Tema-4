@@ -72,6 +72,7 @@ function criar_eleicao() {
 
 async function pedir_token() {
 
+    console.log("clicou no botão pedir token");
     const email = document.getElementById('email').value;
 
     if (email.trim() === "") {
@@ -79,13 +80,15 @@ async function pedir_token() {
         return;
     }
     
-    const response = await fetch("http://localhost:3000/login", {   //esperar que será enviado para o backend
+    const response = await fetch("/login", {   //esperar que será enviado para o backend
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },    
         body: JSON.stringify({ email }) // email: "XXXX@gmail.com" 
     });
     const data = await response.json();
     alert(data.message);
+    localStorage.setItem('email', email); //guardar email no localStorage para usar depois na verificação do token
+    window.location.href = "verificar_token.html"; //redirecionar para a página de verificação do token
 } // email → fetch → backend (/login) → gera token → envia email → resposta → alert
 
 
