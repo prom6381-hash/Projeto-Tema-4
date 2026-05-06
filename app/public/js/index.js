@@ -1,5 +1,4 @@
 
-
 //criar_eleicao.html 
 
 // - Botão Adicionar Candidatos
