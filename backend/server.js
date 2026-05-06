@@ -98,7 +98,7 @@ app.listen(PORT, () => {
 
 
 
-
+// FAZER a parte que corre resultados de eleições
 
 
 

@@ -65,8 +65,70 @@ function criar_eleicao() {
     alert(`Eleição '${nomeEleicao}' criada com ${candidatos.length} candidatos de ${dataInicio} a ${dataFim}!`);
 }
 
+// Verificar os resultados de uma eleição
+async function ver_eleicoes(){
+    const eleicoes_ativas= document.getElementById('ver_eleicao').value;
+    try{
+        const resposta= await fetch('http://localhost:4000/api/eleicoes');
+        if (!resposta.ok){
+            alert("Erro ao obter os resultados!");
+            return;}
+        const info= await resposta.json();
+        const dados= document.getElementById("resultados").value;
+        dados.innerHTML='';
+        if (info.lenght===0){
+            alert("Não existem eleições ativas atualmente");
+            return;
+        }
+        info.forEach(exibir=>{
+            const exibido= document.createElement("div");
+            exibido.style.padding="1px solid";
+            exibido.style.border="15px";
+            exibido.style.margin="10px 0";
+            exibido.style.borderRadius="8px";
 
+            const nome= document.createElement("h4");
+            nome.textContent=exibir.nome;
+            exibir.appendChild(nome);
 
+            const dataComeco= new Date(exibir.dataInicio).toLocaleDateString("pt-PT");
+            const dataAcaba= new Date(exibir.dataFim).toLocaleDateString("pt-PT");
+
+            const data= document.createElement("p");
+            data.textContent=`Eleição ocorre de ${dataComeco} até ${dataAcaba}`;
+            exibir.appendChild(data);
+
+            const atual= new Date;
+            const comeco= new Date(exibir.dataInicio);
+            const acaba= new Date(exibir.dataFim);
+            let estado;
+            
+            if (comeco <= atual && acaba>= atual){
+                estado="Eleição atualmente ativa e a decorrer!"
+            }
+            else{
+                estado="A eleição ainda não começou ou já acabou!"
+            }
+
+            const estado1=document.createElement("p");
+            estado1.textContent=estado;
+            exibir.appendChild(estado1);
+
+            const eleicaobutao= document.createElement("button");
+            eleicaobutao.textContent='Ver resultados da eleição';
+            eleicaobutao.onclick=function(){
+                resultados_eleicoes(exibir._id);
+            };
+            exibido.appendChild(eleicaobutao);
+            dados.appendChild(eleicaobutao);
+        });
+    }  catch (erro){
+        console.error("O erro é", erro);
+        const dados= document.getElementById("resultados").value;
+        dados.innerHTML='<p> Erro! Tente de novo!</p>' 
+    }
+}
+async function resultados_eleicoes(id){} // faço amanhã lol
 // Pedir token - login
 
 async function pedir_token() {
