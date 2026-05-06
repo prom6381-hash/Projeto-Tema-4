@@ -104,3 +104,13 @@ async function verificar_token() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, token })
+    });
+    const data = await response.json();
+    if (response.ok) {
+        alert(data.message);
+        window.location.href = "votar_ou_criar.html"; //redirecionar para a página de votação ou criação de eleição
+    } else {
+        alert(data.error);
+    }
+}   
+
