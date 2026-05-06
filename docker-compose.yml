@@ -42,6 +42,8 @@ services:
       - ./app/base_de_dados.js:/app/base_de_dados.js
     networks:
       - network_sistema_todo
+    env_file:
+      - .env
 
   servidor-ca:
     build:
@@ -66,8 +68,6 @@ services:
     networks:
       - network_sistema_todo
 
-  env_file:
-    - .env
       
 networks:
   network_sistema_todo:
