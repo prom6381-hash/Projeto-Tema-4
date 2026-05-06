@@ -54,8 +54,8 @@ services:
       - CA_CERT=/app/ca_cert.pem
       - CA_KEY=/app/ca_key.pem
     volumes:
-      - ./servidor_CA:/app
-      - ./servidor_CA/certificados:/app/certs
+      - ./servidor-ca:/app
+      - ./servidor-ca/certificados:/app/certs
     networks:
       - network_sistema_todo
 
