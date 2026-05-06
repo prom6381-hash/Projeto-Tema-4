@@ -133,15 +133,24 @@ async function verificar_token() {
 
     if (response.ok) { // se a resposta for 200 - 299: sucesso 
         alert(data.message);
-        window.location.href = "votar_ou_criar.html"; //redirecionar para a página de votação ou criação de eleição
-    } else {
-        alert(data.error);
-    }
-
-    if (response.ok) {
         localStorage.removeItem("email");
         localStorage.removeItem("tokenType");
+    
+
+        if (tokenType === "register" || tokenType === "login") {
+        window.location.href = "votar_ou_criar.html";
     }
 
-    if 
+        else if (tokenType === "vote") {
+        window.location.href = "votar.html"; 
+    }
+
+        else if (tokenType === "create") {
+        window.location.href = "criar_eleicao.html"; 
+    }
+    }
+
+    else {
+        alert(data.error);
+    }
 }
