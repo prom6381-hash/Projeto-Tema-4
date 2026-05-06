@@ -7,6 +7,7 @@ const { generateToken } = require("./utils/token");
 const { sendTokenEmail } = require("./utils/email");
 const { hashToken } = require("./utils/hmac");
 const Token = require("./models/Token");
+const User = require("./models/User");
 const app = express();
 
 app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
@@ -22,10 +23,10 @@ const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
 // - Pedir token - login
 
 app.post("/login", async (req, res) => {
-    const { email } = req.body;
+    const { email, tipoToken } = req.body;
     
-    if (!email) {
-        return res.status(400).json({ error: "Email é obrigatório" });
+    if (!email || !tipoToken) {
+        return res.status(400).json({ error: "Dados inválidos" });
     }
 
     //token.js criar token
@@ -41,7 +42,7 @@ app.post("/login", async (req, res) => {
 
     await Token.findOneAndUpdate(
         { email },
-        { tokenHash, expiresAt, type: "login" },
+        { tokenHash, expiresAt, tipoToken},
         { upsert: true, new: true },  //se não existir, cria um novo documento e retorna o documento atualizado ou criado
     );
 
@@ -70,7 +71,6 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
         return res.status(400).json({ error: "Token inválido ou expirado" });
     }
     
-
     // Verificar se o token ainda é válido
     if (Date.now() > tokenData.expiresAt) {
         await Token.deleteOne({ email }); // deleteOne é um comando do mongoose
@@ -89,11 +89,46 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
         return res.status(400).json({ error: "Token inválido" });
     }
 
+
+    if (tokenType === "register") {
+        // Criar o utilizador na base de dados
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+            return res.status(400).json({ error: "Utilizador já existe" });
+        }
+
+        await User.create({ email });
+        return res.json({ message: "Registo e autenticação bem-sucedidos" });
+    }   
+
+    if (tokenType === "login") {
+        // Verificar se o utilizador existe
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(400).json({ error: "Utilizador não encontrado" });
+        }
+
+        return res.json({ message: "Autenticação bem-sucedida" });
+    }
+
+    if (tokenType === "vote") {
+        return res.json({ message: "Token de voto verificado com sucesso" });
+    }
+
+    if (tokenType === "create") {
+        return res.json({ message: "Token de criação verificado com sucesso" });
+    }
+
+    if (!tokenType === "register" && tokenType !== "login" && tokenType !== "vote" && tokenType !== "create") {
+        return res.status(400).json({ error: "Tipo de token inválido" });
+    }
+
     // Remover o token após verificação
     await Token.deleteOne({ email });
-
-    return res.json({ message: "Autenticado com sucesso" });
 });
+
 
 
 //arrancar server

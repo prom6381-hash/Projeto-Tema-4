@@ -2,17 +2,45 @@
 
 // login
 function token_login() {
-    localStorage.setItem("tokenType", "login"); //guardar o tipo como login para usar depois na verificação do token
+    await fetch("/login", {   //esperar que será enviado para o backend
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },    //cabeçalho para indicar que o corpo da requisição é JSON
+        body: JSON.stringify({ email, tokenType: "login" }) 
+    });
     window.location.href = "pedir_token.html"; //redirecionar para a página de pedir token
 }
 
 //registar 
 
 function token_registar() {
-    localStorage.setItem("tokenType", "register"); //guardar o tipo como register para usar depois na verificação do token
-    window.location.href = "pedir_token.html"; //redirecionar para a página de pedir token
+    await fetch("/login", {  
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },    
+        body: JSON.stringify({ email, tokenType: "register" }) 
+    });
+    window.location.href = "pedir_token.html";
 }
 
+
+//votar 
+function token_votar() {
+    await fetch("/login", {  
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },   
+        body: JSON.stringify({ email, tokenType: "vote" }) 
+    });
+    window.location.href = "pedir_token.html";
+}
+
+//criar eleição
+function token_criar_eleicao() {
+    await fetch("/login", {   
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },   
+        body: JSON.stringify({ email, tokenType: "create" }) 
+    });
+    window.location.href = "pedir_token.html"; 
+}
 
 //criar_eleicao.html
 
@@ -97,11 +125,12 @@ async function pedir_token() {
     const response = await fetch("/login", {   //esperar que será enviado para o backend
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },    //cabeçalho para indicar que o corpo da requisição é JSON
-        body: JSON.stringify({ email }) // email: "XXXX@gmail.com" 
+        body: JSON.stringify({ 
+            email }) 
     });
     const data = await response.json();
     alert(data.message);
-    localStorage.setItem('email', email); //guardar email no localStorage para usar depois na verificação do token
+
     window.location.href = "verificar_token.html"; //redirecionar para a página de verificação do token
 } // email → fetch → backend (/login) → gera token → envia email → resposta → alert
 
@@ -120,6 +149,12 @@ async function verificar_token() {
 
     if (token.trim() === "") {
         alert("Por favor, insira o token.");
+        return;
+    }
+
+    if (!tokenType) {
+        alert("Tipo de token não encontrado. Por favor, faça login novamente.");
+        window.location.href = "index.html";
         return;
     }
 
