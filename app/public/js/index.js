@@ -81,7 +81,7 @@ async function pedir_token() {
     
     const response = await fetch("/login", {   //esperar que será enviado para o backend
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },    
+        headers: { 'Content-Type': 'application/json' },    //cabeçalho para indicar que o corpo da requisição é JSON
         body: JSON.stringify({ email }) // email: "XXXX@gmail.com" 
     });
     const data = await response.json();
@@ -92,6 +92,15 @@ async function pedir_token() {
 
 
 // Verificar token
-//async function verificar_token() {
- //   const email = document.getElementById('email').value;
- //   const token = document.getElementById('token').value;
+async function verificar_token() {
+    const email = document.getElementById('email').value;
+    const token = document.getElementById('token').value;
+    if (token.trim() === "") {
+        alert("Por favor, insira o token.");
+        return;
+    }
+
+    const response = await fetch("/verify-token", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, token })
