@@ -65,6 +65,9 @@ services:
       - "27017:27017"
     networks:
       - network_sistema_todo
+
+  env_file:
+    - .env
       
 networks:
   network_sistema_todo:
