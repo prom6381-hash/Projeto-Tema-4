@@ -122,7 +122,7 @@ async function pedirToken(tipo) {
 
         // redireciona com dados na URL (sem localStorage)
         window.location.href =
-            "enviar_token.html?type=" + tipo +
+            "verificar_token.html?type=" + tipo +
             "&email=" + encodeURIComponent(email);
 
     } else {

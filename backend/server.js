@@ -78,7 +78,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
     }
 
     // Verificar se o tipo do token corresponde
-    if (tokenData.type !== tokenType) {
+    if (tokenData.tokenType !== tokenType) {
         return res.status(400).json({ error: "Tipo de token inválido" });
     }
 
