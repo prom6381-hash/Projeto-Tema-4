@@ -18,7 +18,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: backend
     depends_on:
@@ -57,7 +57,7 @@ services:
       - CA_KEY=/app/ca_key.pem
     volumes:
       - ./servidor-ca:/app
-      - ./servidor-ca/certificados:/app/certs
+      - ./servidor-ca/certificados:/app/certificados
     networks:
       - network_sistema_todo
   mongo:
