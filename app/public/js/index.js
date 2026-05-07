@@ -84,47 +84,94 @@ function criar_eleicao() {
     alert(`Eleição '${nomeEleicao}' criada com ${candidatos.length} candidatos de ${dataInicio} a ${dataFim}!`);
 }
 
-
-
-
-<<<<<<< Updated upstream
 async function pedirTokenLogin() {
     await pedirToken("login");
-=======
-            const data= document.createElement("p");
-            data.textContent=`Eleição ocorre de ${dataComeco} até ${dataAcaba}`;
-            exibir.appendChild(data);
+}
 
-            const atual= new Date;
-            const comeco= new Date(exibir.dataInicio);
-            const acaba= new Date(exibir.dataFim);
+async function pedirTokenRegisto() {
+    await pedirToken("register");
+}
+
+async function pedirTokenVoto() {
+    await pedirToken("vote");
+}
+
+async function pedirTokenCriar() {
+    await pedirToken("create");
+}
+async function ver_resultados() {
+    try {
+        const resposta = await fetch('http://localhost:4000/api/eleicoes');
+        
+        if (!resposta.ok) {
+            alert("Erro ao carregar eleições.");
+            return;
+        }
+        
+        const dados = await resposta.json();
+        
+        const exibir = document.getElementById('resultados-container');
+        exibir.innerHTML = '';
+        
+        if (dados.length === 0) {
+            exibir.innerHTML = '<p>Não há eleições disponíveis.</p>';
+            return;
+        }
+        
+        dados.forEach(eleicao => {
+            
+            const cartao = document.createElement('div');
+            cartao.style.border = '1px solid #ccc';
+            cartao.style.padding = '15px';
+            cartao.style.margin = '10px 0';
+            cartao.style.borderRadius = '8px';
+            
+            const titulo = document.createElement('h3');
+            titulo.textContent = eleicao.nome;
+            cartao.appendChild(titulo);
+            
+            const dataComeco = new Date(eleicao.dataInicio).toLocaleDateString('pt-PT');
+            const dataAcaba = new Date(eleicao.dataFim).toLocaleDateString('pt-PT');
+            
+            const data = document.createElement('p');
+            data.textContent = `Eleição ocorre de ${dataComeco} até ${dataAcaba}`;
+            cartao.appendChild(data);
+            
+            const atual = new Date();
+            const comeco = new Date(eleicao.dataInicio);
+            const acaba = new Date(eleicao.dataFim);
             let estado;
             
-            if (comeco <= atual && acaba>= atual){
-                estado="Eleição atualmente ativa e a decorrer!"
+            if (atual >= comeco && atual <= acaba) {
+                estado = 'Eleição atualmente ativa e a decorrer!';
+            } else if (atual < comeco) {
+                estado = 'A eleição ainda não começou!';
+            } else {
+                estado = 'A eleição já acabou!';
             }
-            else{
-                estado="A eleição ainda não começou ou já acabou!"
-            }
-
-            const estado1=document.createElement("p");
-            estado1.textContent=estado;
-            exibir.appendChild(estado1);
-
-            const eleicaobutao= document.createElement("button");
-            eleicaobutao.textContent='Ver resultados da eleição';
-            eleicaobutao.onclick=function(){
-                resultados_eleicoes(exibir._id);
+            
+            const estado1 = document.createElement('p');
+            estado1.textContent = estado;
+            estado1.style.fontWeight = 'bold';
+            cartao.appendChild(estado1);
+            
+            const eleicaobutao = document.createElement('button');
+            eleicaobutao.textContent = 'Ver resultados da eleição';
+            eleicaobutao.onclick = function() {
+                ver_uma_eleicao(eleicao._id);
             };
-            exibido.appendChild(eleicaobutao);
-            dados.appendChild(eleicaobutao);
+            cartao.appendChild(eleicaobutao);
+            
+            exibir.appendChild(cartao);
         });
-    }  catch (erro){
-        console.error("O erro é", erro);
-        const dados= document.getElementById("resultados").value;
-        dados.innerHTML='<p> Erro! Tente de novo!</p>' 
+        
+    } catch (erro) {
+        console.error('O erro é', erro);
+        const container = document.getElementById('resultados-container');
+        container.innerHTML = '<p style="color: red;">Erro! Tente de novo!</p>';
     }
 }
+
 async function resultados_eleicoes(id){
     try{
         const endereco=await fetch(`http://localhost:4000/api/eleicoes/${id}/resultados`);
@@ -178,6 +225,64 @@ async function resultados_eleicoes(id){
         return;
     }
 } 
+
+async function ver_uma_eleicao(id) {
+    
+    try {
+        const resposta = await fetch(`http://localhost:4000/api/eleicoes/${id}/resultados`);
+        
+        if (!resposta.ok) {
+            alert("Erro ao carregar resultados.");
+            return;
+        }
+        
+        const dados = await resposta.json();
+        
+        const container = document.getElementById('resultados');
+        container.innerHTML = '';
+        
+        const titulo = document.createElement('h2');
+        titulo.textContent = dados.nome;
+        container.appendChild(titulo);
+        
+        const totalVotos = document.createElement('p');
+        totalVotos.textContent = `Total de votos: ${dados.totalVotos}`;
+        container.appendChild(totalVotos);
+        
+        
+        dados.resultados.forEach(candidato => {
+            
+            const linha = document.createElement('p');
+            linha.textContent = `${candidato.nome}: Tem ${candidato.votos} votos (${candidato.percentagem}%)`;
+            container.appendChild(linha);
+            
+            const barraFundo = document.createElement('div');
+            barraFundo.style.background = '#e0e0e0';
+            barraFundo.style.height = '24px';
+            barraFundo.style.borderRadius = '4px';
+            barraFundo.style.marginBottom = '15px';
+            
+            const barraPreenchida = document.createElement('div');
+            barraPreenchida.style.background = '#3498db';
+            barraPreenchida.style.height = '100%';
+            barraPreenchida.style.width = `${candidato.percentagem}%`;
+            barraPreenchida.style.borderRadius = '4px';
+            
+            barraFundo.appendChild(barraPreenchida);
+            container.appendChild(barraFundo);
+        });
+        
+        const botaoVoltar = document.createElement('button');
+        botaoVoltar.textContent = 'Voltar';
+        botaoVoltar.onclick = ver_resultados;
+        container.appendChild(botaoVoltar);
+        
+    } catch (erro) {
+        console.error('Erro:', erro);
+        alert("Erro ao obter os resultados. Tente novamente!")
+    }
+}
+
 // Pedir token - login
 
 async function pedir_token() {
@@ -201,8 +306,7 @@ async function pedir_token() {
     window.location.href = "verificar_token.html"; //redirecionar para a página de verificação do token
 } // email → fetch → backend (/login) → gera token → envia email → resposta → alert
 
-=======
->>>>>>> 68e1d563e91e25bd133590aef9e50b7d8e7bebb9
+
 
 // Verificar token
 async function verificar_token() {
@@ -247,7 +351,7 @@ async function verificar_token() {
         alert(data.error);
         }
     }
->>>>>>> Stashed changes
+
 }
 
 async function pedirTokenRegisto() {
