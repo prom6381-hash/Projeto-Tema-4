@@ -61,7 +61,7 @@ services:
       - network_sistema_todo
     env_file:
       - .env
-      
+
   mongo:
     image: mongo:6
     container_name: mongo
@@ -76,3 +76,4 @@ networks:
     driver: bridge
 
 #Se precisarem, alterem o código !!
+# ver aula de 7/05 e ver volums
