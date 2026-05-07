@@ -1,21 +1,28 @@
-const { lowerCase, trim, create } = require('lodash');
-const mondoose = require('mongoose');
-const { Certificate } = require('node:crypto');
-const { is } = require('type-is');
+const mongoose = require("mongoose");
 
-const UserSchema = new mondoose.Schema({
-    email: { 
-        type: String, 
-        required: true, 
-        unique: true, 
-        lowerCase: true, 
-        trim: true },
-    
-    isVerified: { type: Boolean, default: false },
+const UserSchema = new mongoose.Schema({
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true
+    },
 
-    Certificate: { type: String, required: false },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
 
-    createdAt: { type: Date, default: Date.now }
-}); 
+    certificate: {
+        type: String,
+        required: false
+    },
 
-module.exports = mondoose.model('User', UserSchema);    
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+module.exports = mongoose.model("User", UserSchema);
