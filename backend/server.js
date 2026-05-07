@@ -98,8 +98,35 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
             return res.status(400).json({ error: "Utilizador já existe" });
         }
 
-        await User.create({ email });
-        return res.json({ message: "Registo e autenticação bem-sucedidos" });
+
+        // Criar o utilizador em memoria (temporariamente)
+        const user = new User({ email });
+
+        // Pedir certificado 
+        const certResponse = await fetch("http://servidor-ca:5000/sign", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email })
+        });
+
+        const certData = await certResponse.json();
+
+        if (!certResponse.ok) {
+            return res.status(500).json({ error: "Erro ao obter certificado" });
+        }
+
+
+        //guarda em memoria temporariamente
+        user.certificate = certData.certificate;
+        user.publicKey = certData.publicKey;
+        user.isVerified = true;
+
+        //guarda na bd
+        await user.save();
+
+        return res.json({ message: "Registo e certificado criados com sucesso" });
     }   
 
     if (tokenType === "login") {
