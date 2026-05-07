@@ -56,7 +56,7 @@ app.post("/login", async (req, res) => {
 // Verificar token
 
 app.post("/verify-token", async(req, res) => {  //async porque vamos usar await para operações assíncronas (acesso à base de dados)
-    const { email, token, tokenType, attempts } = req.body;
+    const { email, token, tokenType } = req.body;
 
     if (!email || !token || !tokenType) {
         return res.status(400).json({ error: "Email e token são obrigatórios" });
@@ -64,36 +64,54 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
     
     const tokenData = await Token.findOne({ email });
 
-    tokenData.attempts ++; // Incrementa o contador de tentativas
-        await tokenData.save(); // Salva a atualização do contador no banco de dados
-
-    if (tokenData.attempts > 5) { // Limite de tentativas
-        await Token.deleteOne({ email }); // Exclui o token para evitar mais tentativas
-        return res.status(429).json({ error: "Muitas tentativas inválidas. Por favor, solicite um novo token." });
-    }
-
-
-    // Verificar se o token é válido 
+    
     if (!tokenData) {
         return res.status(400).json({ error: "Token inválido ou expirado" });
     }
-    
+
+    if (tokenData.blockedUntil && tokenData.blockedUntil > Date.now()) {
+    return res.status(429).json({
+        error: "Demasiadas tentativas. Tenta mais tarde."
+    });
+    }
+
+
+
     // Verificar se o token ainda é válido
     if (Date.now() > tokenData.expiresAt) {
         await Token.deleteOne({ email }); // deleteOne é um comando do mongoose
         return res.status(400).json({ error: "Token expirado" });
     }
 
+
+
+
     // Verificar se o tipo do token corresponde
     if (tokenData.tokenType !== tokenType) {
-        return res.status(400).json({ error: "Tipo de token inválido" });
+        tokenData.attempts += 1;
+        await tokenData.save();
+
+        return res.status(400).json({ error: "Tipo de token inválido" })
     }
+    
 
     // Verificar se o hash do token corresponde
     const tokenHash = hashToken(token, email);
 
     if (tokenHash !== tokenData.tokenHash) {
+        tokenData.attempts += 1;
+
+        if (tokenData.attempts >= 5) { // Limite de tentativas para evitar ataques de força bruta
+            tokenData.blockedUntil = new Date(Date.now() + 5 * 60 * 1000); // Bloqueia por 15 minutos
+            tokenData.attempts = 0; // Reseta o contador de tentativas após bloquear
+        }   
+        await tokenData.save();
+
         return res.status(400).json({ error: "Token inválido" });
+    }   else {
+        tokenData.attempts = 0; // Reseta o contador de tentativas após uma verificação bem-sucedida
+        tokenData.blockedUntil = null;
+        await tokenData.save();
     }
 
 
@@ -161,9 +179,6 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
         tokenType !== "create") {
         return res.status(400).json({ error: "Tipo de token inválido" });
     }
-
-    // Remover o token após verificação
-    await Token.deleteOne({ email });
 });
 
 

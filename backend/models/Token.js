@@ -7,6 +7,7 @@ const TokenSchema = new mondoose.Schema({
     expiresAt: { type: Date, required: true },
     tokenType: { type: String, enum: ["login", "register", "vote", "create"], required: true},
     attempts: { type: Number, default: 0 }, // Contador de tentativas para ataques força bruta
+    blockedUntil: { type: Date, default: null } 
 });
 
 module.exports = mondoose.model('Token', TokenSchema);
