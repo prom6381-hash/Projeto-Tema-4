@@ -170,6 +170,49 @@ app.listen(PORT, () => {
 
 
 // FAZER a parte que corre resultados de eleições
+app.get("/api/eleicoes/:id/resultado", async(req,res)=>{
+
+    try{
+        const id= req.params.id;
+        const eleicao= await Eleicao.findById(id);
+
+        if (!eleicao){
+            return res.status(404).json({error:'Não encontrámos a eleição'});
+        }
+        
+        const votos1=await Voto.find({eleicaoId: id});
+
+        const votosTotal= {};
+        votos1.forEach(total =>{
+            if (votosTotal[total.candidato]){
+                ++votosTotal[total.candidato];
+            } else{
+                votosTotal[total.candidato]=1;
+            }
+        });
+
+        const votosTodos= votos1.length;
+        const resultados= eleicao.candidatos.map(candidatos2=>{
+            const votoCandidato=votosTotal[candidatos2];
+            return{
+                nome: candidatos2,
+                votos: votoCandidato,
+                percentagem: votosTodos>0
+                    ? Number(votosCandidato / votosTodos * 100).toFixed(1) 
+                    : 0
+            };
+        });
+        res.json({
+            nome: eleicao.nome,
+            dataInicio: eleicao.dataInicio,
+            dataFim: eleicao.dataFim,
+            totalVotos: votosTodos, 
+            resultados: resultados
+        });
+    } catch(erro3){
+        res.status(500).json({erro3:"Erro ao buscar os reesultados da eleição!"})
+    }
+});
 
 
 
