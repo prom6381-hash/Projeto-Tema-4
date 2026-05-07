@@ -18,8 +18,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: backend
     depends_on:
       - servidor-ca
@@ -27,7 +27,7 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=development  
       - CA_HOST=servidor-ca
       - CA_PORT=5000
       - PORT=4000
@@ -38,8 +38,7 @@ services:
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
     volumes:
-      - ./backend:/app/backend
-      - ./app/base_de_dados.js:/app/base_de_dados.js
+      - ./:/app
     networks:
       - network_sistema_todo
     env_file:

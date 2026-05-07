@@ -79,7 +79,7 @@ async function pedirToken(tipo) {
         return;
     }
 
-    const res = await fetch("/login", {
+    const res = await fetch("http://localhost:4000/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -147,7 +147,7 @@ async function verificar_token() {
         return;
     }
 
-    const response = await fetch("/verify-token", {
+    const response = await fetch("http://localhost:4000/verify-token", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

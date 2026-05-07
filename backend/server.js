@@ -23,9 +23,9 @@ const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
 // - Pedir token - login
 
 app.post("/login", async (req, res) => {
-    const { email, tipoToken } = req.body;
+    const { email, tokenType } = req.body;
     
-    if (!email || !tipoToken) {
+    if (!email || !tokenType) {
         return res.status(400).json({ error: "Dados inválidos" });
     }
 
@@ -136,11 +136,10 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 
 //arrancar server
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Servidor a correr na porta ${PORT}`);
 });
-
 
 
 // FAZER a parte que corre resultados de eleições
