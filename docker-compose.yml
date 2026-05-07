@@ -59,6 +59,9 @@ services:
       - ./servidor-ca/certificados:/app/certificados
     networks:
       - network_sistema_todo
+    env_file:
+      - .env
+      
   mongo:
     image: mongo:6
     container_name: mongo
