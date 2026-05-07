@@ -78,6 +78,24 @@ function criar_eleicao() {
 }
 
 
+
+async function pedirTokenLogin() {
+    await pedirToken("login");
+}
+
+async function pedirTokenRegisto() {
+    await pedirToken("register");
+}
+
+async function pedirTokenVoto() {
+    await pedirToken("vote");
+}
+
+async function pedirTokenCriar() {
+    await pedirToken("create");
+}
+
+
 async function pedirToken(tipo) {
     const email = document.getElementById("email").value;
 
@@ -110,23 +128,6 @@ async function pedirToken(tipo) {
     } else {
         alert(data.error);
     }
-}
-
-
-function token_login() {
-    pedirToken("login");
-}
-
-function token_registar() {
-    pedirToken("register");
-}
-
-function token_votar() {
-    pedirToken("vote");
-}
-
-function token_criar_eleicao() {
-    pedirToken("create");
 }
 
 

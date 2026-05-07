@@ -42,7 +42,7 @@ app.post("/login", async (req, res) => {
 
     await Token.findOneAndUpdate(
         { email },
-        { tokenHash, expiresAt, tipoToken},
+        { tokenHash, expiresAt, tokenType},
         { upsert: true, new: true },  //se não existir, cria um novo documento e retorna o documento atualizado ou criado
     );
 
