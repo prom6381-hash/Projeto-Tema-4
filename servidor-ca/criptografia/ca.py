@@ -5,7 +5,9 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography import x509
 from cryptography.x509.oid import NameOID
+from dotenv import load_dotenv #para ser possivel buscar password apartir do .env
 
+load_dotenv()
 
 password = os.environ.get("CA_PASSWORD", "devpassword").encode()
 
