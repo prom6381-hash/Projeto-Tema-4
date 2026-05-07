@@ -55,6 +55,13 @@ function criar_eleicao() {
         alert("Por favor, insira a data de fim.");
         return;
     }
+    const inicio = new Date(dataInicio);
+    const fim = new Date(dataFim);
+
+    if (fim < inicio) {
+    alert("A data de fim não pode ser anterior à data de início.");
+    return;
+    }
     
     inputs.forEach(input => {
         if (input.value.trim() !== "") { //trim tira espaços em branco
