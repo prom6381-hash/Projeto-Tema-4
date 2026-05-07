@@ -56,14 +56,21 @@ app.post("/login", async (req, res) => {
 // Verificar token
 
 app.post("/verify-token", async(req, res) => {  //async porque vamos usar await para operações assíncronas (acesso à base de dados)
-    const { email, token, tokenType } = req.body;
-
+    const { email, token, tokenType, attempts } = req.body;
 
     if (!email || !token || !tokenType) {
         return res.status(400).json({ error: "Email e token são obrigatórios" });
     }
     
     const tokenData = await Token.findOne({ email });
+
+    tokenData.attempts ++; // Incrementa o contador de tentativas
+        await tokenData.save(); // Salva a atualização do contador no banco de dados
+
+    if (tokenData.attempts > 5) { // Limite de tentativas
+        await Token.deleteOne({ email }); // Exclui o token para evitar mais tentativas
+        return res.status(429).json({ error: "Muitas tentativas inválidas. Por favor, solicite um novo token." });
+    }
 
 
     // Verificar se o token é válido 

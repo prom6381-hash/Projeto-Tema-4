@@ -192,6 +192,9 @@ async function verificar_token() {
         }
 
     } else {
-        alert(data.error);
+        alert(data.error)
+        if (response.status === 429) { // Se muitas tentativas, volta para o início
+            window.location.href = "index.html";
+        }
     }
 }

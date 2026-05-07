@@ -3,7 +3,6 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
-    container_name: interface-web
     depends_on:
       - backend
     ports:
@@ -20,7 +19,6 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: backend
     depends_on:
       - servidor-ca
       - mongo
@@ -48,7 +46,6 @@ services:
     build:
       context: ./servidor-ca
       dockerfile: Dockerfile
-    container_name: servidor_criptografia
     ports:
       - "5000:5000"
     environment:
@@ -63,10 +60,11 @@ services:
       - .env
 
   mongo:
-    image: mongo:6
-    container_name: mongo
+    image: mongo:7
     ports:
       - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
     networks:
       - network_sistema_todo
 
@@ -75,5 +73,8 @@ networks:
   network_sistema_todo:
     driver: bridge
 
+volumes:
+  mongo_data:
+  
 #Se precisarem, alterem o código !!
 # ver aula de 7/05 e ver volums

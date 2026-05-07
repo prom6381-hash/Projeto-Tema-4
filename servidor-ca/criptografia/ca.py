@@ -6,8 +6,10 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from dotenv import load_dotenv #para ser possivel buscar password apartir do .env
+from flask import Flask, request, jsonify
 
-load_dotenv()
+
+load_dotenv() 
 
 password = os.environ.get("CA_PASSWORD", "devpassword").encode()
 
@@ -121,6 +123,27 @@ def issue_user_cert(ca_key, ca_cert, user_name):
     user_cert_pem = cert.public_bytes(serialization.Encoding.PEM)
 
     return user_key_pem, user_cert_pem
+
+app = Flask(__name__)
+ca_key, ca_cert = create_ca()
+
+@app.post("/sign")
+def sign():
+    data = request.json
+    email = data["email"]
+
+    key, cert = issue_user_cert(ca_key, ca_cert, email)
+
+    return jsonify({
+        "certificate": cert.decode(),
+        "privateKey": key.decode()
+    })
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+
+
+
 
 #teste:
 #if __name__ == "__main__":
