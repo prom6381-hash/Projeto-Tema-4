@@ -58,8 +58,15 @@ function criar_eleicao() {
     const inicio = new Date(dataInicio);
     const fim = new Date(dataFim);
 
-    if (fim < inicio) {
-    alert("A data de fim não pode ser anterior à data de início.");
+    if (fim <= inicio) {
+    alert("A data de fim não pode ser anterior/igual à data de início.");
+    return;
+    }
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+
+    if (inicio < hoje) {
+    alert("A eleição não pode começar no passado.");
     return;
     }
     
@@ -76,6 +83,7 @@ function criar_eleicao() {
 
     alert(`Eleição '${nomeEleicao}' criada com ${candidatos.length} candidatos de ${dataInicio} a ${dataFim}!`);
 }
+
 
 
 
