@@ -515,7 +515,7 @@ async function verificarSenha() {
         return;
     } 
 
-    const response = await fetch("http://localhost:4000/verify-password", {
+    const response = await fetch("http://localhost:4000/verificar_password", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

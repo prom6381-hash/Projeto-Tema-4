@@ -30,6 +30,12 @@ app.post("/login", async (req, res) => {
         return res.status(400).json({ error: "Dados inválidos" });
     }
 
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+        return res.status(404).json({ error: "Utilizador não encontrado" });
+    }
+
+    
     //token.js criar token
     const token = generateToken();
 
@@ -147,12 +153,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 
 
 
-//arrancar server
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-    console.log(`Servidor a correr na porta ${PORT}`);
-});
 
 
 // FAZER a parte que corre resultados de eleições
@@ -272,5 +273,10 @@ app.post("/verificar_password", async(req,res)=>{
 
 
 
-// Realizar VOTO ou CRIAR VOTAÇÃO (TOKENS)
 
+//arrancar server
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+    console.log(`Servidor a correr na porta ${PORT}`);
+});
