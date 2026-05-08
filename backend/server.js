@@ -56,22 +56,22 @@ app.post("/login", async (req, res) => {
 
 // Verificar token
 
-app.post("/verify-token", async(req, response) => {  //async porque vamos usar await para operações assíncronas (acesso à base de dados)
+app.post("/verify-token", async(req, res) => {  //async porque vamos usar await para operações assíncronas (acesso à base de dados)
     const { email, token, tokenType } = req.body;
 
     if (!email || !token || !tokenType) {
-        return response.status(400).json({ error: "Email e token são obrigatórios" });
+        return res.status(400).json({ error: "Email e token são obrigatórios" });
     }
     
     const tokenData = await Token.findOne({ email });
 
     
     if (!tokenData) {
-        return response.status(400).json({ error: "Token inválido ou expirado" });
+        return res.status(400).json({ error: "Token inválido ou expirado" });
     }
 
     if (tokenData.blockedUntil && tokenData.blockedUntil > Date.now()) {
-    return response.status(429).json({
+    return res.status(429).json({
         error: "Demasiadas tentativas. Tenta mais tarde."
     });
     }
@@ -81,7 +81,7 @@ app.post("/verify-token", async(req, response) => {  //async porque vamos usar a
     // Verificar se o token ainda é válido
     if (Date.now() > tokenData.expiresAt) {
         await Token.deleteOne({ email }); // deleteOne é um comando do mongoose
-        return response.status(400).json({ error: "Token expirado" });
+        return res.status(400).json({ error: "Token expirado" });
     }
 
 
@@ -92,7 +92,7 @@ app.post("/verify-token", async(req, response) => {  //async porque vamos usar a
         tokenData.attempts += 1;
         await tokenData.save();
 
-        return response.status(400).json({ error: "Tipo de token inválido" })
+        return res.status(400).json({ error: "Tipo de token inválido" })
     }
     
 
@@ -108,7 +108,7 @@ app.post("/verify-token", async(req, response) => {  //async porque vamos usar a
         }   
         await tokenData.save();
 
-        return response.status(400).json({ error: "Token inválido" });
+        return res.status(400).json({ error: "Token inválido" });
     }   else {
         tokenData.attempts = 0; // Reseta o contador de tentativas após uma verificação bem-sucedida
         tokenData.blockedUntil = null;
@@ -117,31 +117,31 @@ app.post("/verify-token", async(req, response) => {  //async porque vamos usar a
 
 
     if (tokenType === "register") {
-        return response.json({
+        return res.json({
             message: "Token válido",
         });
     }
 
 
     if (tokenType === "login") {
-        return response.json({
+        return res.json({
             message: "Token válido",
         });
     }
 
     if (tokenType === "vote") {
-        return response.json({ message: "Token de voto verificado com sucesso" });
+        return res.json({ message: "Token de voto verificado com sucesso" });
     }
 
     if (tokenType === "create") {
-        return response.json({ message: "Token de criação verificado com sucesso" });
+        return res.json({ message: "Token de criação verificado com sucesso" });
     }
 
     if (tokenType !== "register" && 
         tokenType !== "login" && 
         tokenType !== "vote" && 
         tokenType !== "create") {
-        return response.status(400).json({ error: "Tipo de token inválido" });
+        return res.status(400).json({ error: "Tipo de token inválido" });
     }
 });
 
@@ -156,14 +156,14 @@ app.listen(PORT, () => {
 
 
 // FAZER a parte que corre resultados de eleições
-app.get("/api/eleicoes/:id/resultado", async(req,response)=>{
+app.get("/api/eleicoes/:id/resultado", async(req,res)=>{
 
     try{
         const id= req.params.id;
         const eleicao= await Eleicao.findById(id);
 
         if (!eleicao){
-            return response.status(404).json({error:'Não encontrámos a eleição'});
+            return res.status(404).json({error:'Não encontrámos a eleição'});
         }
         
         const votos1=await Voto.find({eleicaoId: id});
@@ -188,7 +188,7 @@ app.get("/api/eleicoes/:id/resultado", async(req,response)=>{
                     : 0
             };
         });
-        response.json({
+        res.json({
             nome: eleicao.nome,
             dataInicio: eleicao.dataInicio,
             dataFim: eleicao.dataFim,
@@ -196,26 +196,26 @@ app.get("/api/eleicoes/:id/resultado", async(req,response)=>{
             resultados: resultados
         });
     } catch(erro3){
-        response.status(500).json({erro3:"Erro ao buscar os reesultados da eleição!"})
+        res.status(500).json({erro3:"Erro ao buscar os reesultados da eleição!"})
     }
 });
 
 
 
-app.post("/create-password", async(req,response)=>{ //primeiro cria o utlizador (usando token e email) e depois cria a password:
+app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usando token e email) e depois cria a password:
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return response.status(400).json({ error: "Email e password são obrigatórios" });
+        return res.status(400).json({ error: "Email e password são obrigatórios" });
     }
 
     const user = await User.findOne({ email });
 
     if (!user) {
-        return response.status(404).json({ error: "Utilizador não encontrado" });
+        return res.status(404).json({ error: "Utilizador não encontrado" });
     }   
 
-    const response = await fetch("http://servidor-ca:5000/verify-token", { //no porto 5000, pois é o porto onde o servidor CA está a correr, que tem as funções do ficheiro auth.py
+    const response = await fetch("http://servidor-ca:5000/hash-password", { //no porto 5000, pois é o porto onde o servidor CA está a correr, que tem as funções do ficheiro auth.py
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -235,17 +235,17 @@ app.post("/create-password", async(req,response)=>{ //primeiro cria o utlizador 
 });
 
 
-app.post("/verificar_password", async(req,response)=>{
+app.post("/verificar_password", async(req,res)=>{
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return response.status(400).json({ error: "Email e password são obrigatórios" });
+        return res.status(400).json({ error: "Email e password são obrigatórios" });
     }
 
     const user = await User.findOne({ email });
 
     if (!user) {
-        return response.status(404).json({ error: "Utilizador não encontrado" });
+        return res.status(404).json({ error: "Utilizador não encontrado" });
     }   
     
     const response = await fetch("http://servidor-ca:5000/verify-password", { //no porto 5000, pois é o porto onde o servidor CA está a correr, que tem as funções do ficheiro auth.py
