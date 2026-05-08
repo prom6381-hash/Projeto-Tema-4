@@ -9,6 +9,16 @@ const UserSchema = new mongoose.Schema({
         trim: true
     },
 
+    salt: {
+        type: String,
+        required: true,
+    },  
+
+    passwordHash: {
+        type: String,
+        required: true
+    },
+
     isVerified: {
         type: Boolean,
         default: false

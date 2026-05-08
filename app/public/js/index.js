@@ -444,8 +444,13 @@ async function verificar_token() {
         alert(data.message);
 
         // redirecionamento baseado no tipo
-        if (tokenType === "login" || tokenType === "register") {
-            window.location.href = "votar_ou_criar.html";
+
+        if (tokenType === "register") {
+            window.location.href = `criar_senha.html?email=${encodeURIComponent(email)}`;
+        }
+
+        else if (tokenType === "login") {
+            window.location.href = `verificar_senha.html?email=${encodeURIComponent(email)}`;
         }
         else if (tokenType === "vote") {
             window.location.href = "votar.html";

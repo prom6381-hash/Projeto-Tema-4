@@ -15,6 +15,7 @@ app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivo
 
 
 const connectDB = require("./base_de_dados.js");
+const { message } = require("statuses");
 connectDB();
 app.use(express.json());
 
@@ -116,53 +117,16 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 
 
     if (tokenType === "register") {
-        // Criar o utilizador na base de dados
-        const existingUser = await User.findOne({ email });
-
-        if (existingUser) {
-            return res.status(400).json({ error: "Utilizador já existe" });
-        }
-
-
-        // Criar o utilizador em memoria (temporariamente)
-        const user = new User({ email });
-
-        // Pedir certificado 
-        const certResponse = await fetch("http://servidor-ca:5000/sign", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email })
+        return res.json({
+            message: "Token válido",
         });
+    }
 
-        const certData = await certResponse.json();
-
-        if (!certResponse.ok) {
-            return res.status(500).json({ error: "Erro ao obter certificado" });
-        }
-
-
-        //guarda em memoria temporariamente
-        user.certificate = certData.certificate;
-        user.publicKey = certData.publicKey;
-        user.isVerified = true;
-
-        //guarda na bd
-        await user.save();
-
-        return res.json({ message: "Registo e certificado criados com sucesso" });
-    }   
 
     if (tokenType === "login") {
-        // Verificar se o utilizador existe
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.status(400).json({ error: "Utilizador não encontrado" });
-        }
-
-        return res.json({ message: "Autenticação bem-sucedida" });
+        return res.json({
+            message: "Token válido",
+        });
     }
 
     if (tokenType === "vote") {
