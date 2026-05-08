@@ -143,6 +143,18 @@ def sign():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 @app.post("/hash-password") #usa funçoes do auth.py para gerar um salt e hashear a password, retornando ambos para o cliente (que os irá guardar para futuras autenticações)
 def hash_pw():
 
@@ -158,6 +170,25 @@ def hash_pw():
         "salt": base64.b64encode(salt).decode(),
         "hash": hashed
     })
+
+
+
+@app.post("/verify-password") #usa funçoes do auth.py para verificar se a password fornecida corresponde ao hash armazenado, usando o salt armazenado
+def verify_pw():
+    data = request.json
+
+    password = data["password"]
+    salt = base64.b64decode(data["salt"])
+    stored_hash = data["hash"]
+
+    is_valid = verify_password(stored_hash, password, salt)
+
+    return jsonify({
+        "valid": is_valid
+    })
+
+
+
 
 
 if __name__ == "__main__":

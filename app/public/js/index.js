@@ -466,3 +466,69 @@ async function verificar_token() {
         }
     }
 }
+
+
+async function criarSenha() {
+    const password = document.getElementById("password").value;
+    const confirmarPassword = document.getElementById("confirmar_password").value;
+
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get("email");
+
+    if (!password || !confirmarPassword) {
+        alert("Por favor, preencha ambos os campos de senha.");
+        return;
+    }
+
+    if (password !== confirmarPassword) {
+        alert("As senhas não coincidem. Tente novamente.");
+        return;
+    }   
+
+    const response = await fetch("http://localhost:4000/create-password", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json(); //envia para o backend, que processa o "response" e devolve um "data" com a mensagem de sucesso ou erro
+
+    if (response.ok) {
+        alert(data.message);
+        window.location.href = "index.html";
+    } else {
+        alert(data.error);
+    }
+}   
+
+
+async function verificarSenha() {
+    const password = document.getElementById("verificar_password").value;
+
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get("email");
+
+    if (!password) {
+        alert("Por favor, insira a senha.");
+        return;
+    } 
+
+    const response = await fetch("http://localhost:4000/verify-password", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        alert(data.message);
+        window.location.href = "votar_ou_criar.html";
+    } else {
+        alert(data.error);
+    }
+}
