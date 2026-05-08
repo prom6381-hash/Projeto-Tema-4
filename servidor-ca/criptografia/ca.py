@@ -127,6 +127,8 @@ def issue_user_cert(ca_key, ca_cert, user_name):
 
 ca_key, ca_cert = create_ca()
 
+app = Flask(__name__)
+
 @app.post("/sign")
 def sign():
     data = request.json
