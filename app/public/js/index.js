@@ -1,8 +1,4 @@
-//index.html 
-
-
-
-
+///index.html 
 
 //criar_eleicao.html
 
@@ -55,23 +51,25 @@ function criar_eleicao() {
         alert("Por favor, insira a data de fim.");
         return;
     }
+
     const inicio = new Date(dataInicio);
     const fim = new Date(dataFim);
 
     if (fim <= inicio) {
-    alert("A data de fim não pode ser anterior/igual à data de início.");
-    return;
+        alert("A data de fim não pode ser anterior/igual à data de início.");
+        return;
     }
+
     const hoje = new Date();
     hoje.setHours(0,0,0,0);
 
     if (inicio < hoje) {
-    alert("A eleição não pode começar no passado.");
-    return;
+        alert("A eleição não pode começar no passado.");
+        return;
     }
     
     inputs.forEach(input => {
-        if (input.value.trim() !== "") { //trim tira espaços em branco
+        if (input.value.trim() !== "") {
             candidatos.push(input.value.trim());
         }
     });
@@ -99,6 +97,8 @@ async function pedirTokenVoto() {
 async function pedirTokenCriar() {
     await pedirToken("create");
 }
+
+// ver resultados lista
 async function ver_resultados() {
     try {
         const resposta = await fetch('http://localhost:4000/api/eleicoes');
@@ -172,12 +172,15 @@ async function ver_resultados() {
     }
 }
 
+// resultados de uma eleição
 async function resultados_eleicoes(id){
     try{
         const endereco=await fetch(`http://localhost:4000/api/eleicoes/${id}/resultados`);
         if (!endereco.ok){
             alert("Erro ao obter o resultado da eleição!");
-            return;}
+            return;
+        }
+
         const info1= await endereco.json();
         const dados= document.getElementById("resultados").value;
         dados.innerHTML='';
@@ -217,8 +220,8 @@ async function resultados_eleicoes(id){
             butao1.TextContext='Ver outras eleições';
             butao1.onclick = ver_eleicoes();
             dados.appendChild(butao1);
-
         });
+
     } catch(erro1){
         console.error("Ocorreu o erro:",erro1);
         alert("Houve um erro, tente novamente!");
@@ -226,8 +229,8 @@ async function resultados_eleicoes(id){
     }
 } 
 
+// ver uma eleição
 async function ver_uma_eleicao(id) {
-    
     try {
         const resposta = await fetch(`http://localhost:4000/api/eleicoes/${id}/resultados`);
         
@@ -249,9 +252,7 @@ async function ver_uma_eleicao(id) {
         totalVotos.textContent = `Total de votos: ${dados.totalVotos}`;
         container.appendChild(totalVotos);
         
-        
         dados.resultados.forEach(candidato => {
-            
             const linha = document.createElement('p');
             linha.textContent = `${candidato.nome}: Tem ${candidato.votos} votos (${candidato.percentagem}%)`;
             container.appendChild(linha);
@@ -283,10 +284,8 @@ async function ver_uma_eleicao(id) {
     }
 }
 
-// Pedir token - login
-
+// LOGIN TOKEN
 async function pedir_token() {
-
     console.log("clicou no botão pedir token");
     const email = document.getElementById('email').value;
 
@@ -295,78 +294,19 @@ async function pedir_token() {
         return;
     }
     
-    const response = await fetch("/login", {   //esperar que será enviado para o backend
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },    //cabeçalho para indicar que o corpo da requisição é JSON
-        body: JSON.stringify({ email }) // email: "XXXX@gmail.com" 
-    });
-    const data = await response.json();
-    alert(data.message);
-    localStorage.setItem('email', email); //guardar email no localStorage para usar depois na verificação do token
-    window.location.href = "verificar_token.html"; //redirecionar para a página de verificação do token
-} // email → fetch → backend (/login) → gera token → envia email → resposta → alert
-
-
-
-// Verificar token
-async function verificar_token() {
-    const { email, tokenType } = getQueryParams();
-    const token = document.getElementById("token").value;
-
-    if (!email || !tokenType) {
-        alert("Sessão inválida. Volta ao início.");
-        window.location.href = "index.html";
-        return;
-    }   
-
-    if (!token || token.trim() === "") {
-        alert("Por favor, insira o token.");
-        return;
-    }
-
-    const response = await fetch("/verify-token", {
+    const response = await fetch("/login", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, token, tokenType })
+        body: JSON.stringify({ email })
     });
 
     const data = await response.json();
-
-    if (response.ok) { // se a resposta for 200 - 299: sucesso 
-        alert(data.message);
-    
-        if (tokenType === "register" || tokenType === "login") {
-        window.location.href = "votar_ou_criar.html";
-    }
-
-        else if (tokenType === "vote") {
-        window.location.href = "votar.html"; 
-    }
-
-        else if (tokenType === "create") {
-        window.location.href = "criar_eleicao.html"; 
-    }
-
-    else {
-        alert(data.error);
-        }
-    }
-
+    alert(data.message);
+    localStorage.setItem('email', email);
+    window.location.href = "verificar_token.html";
 }
 
-async function pedirTokenRegisto() {
-    await pedirToken("register");
-}
-
-async function pedirTokenVoto() {
-    await pedirToken("vote");
-}
-
-async function pedirTokenCriar() {
-    await pedirToken("create");
-}
-
-
+// PEDIR TOKEN GENERICO
 async function pedirToken(tipo) {
     const email = document.getElementById("email").value;
 
@@ -391,7 +331,6 @@ async function pedirToken(tipo) {
     if (res.ok) {
         alert(data.message);
 
-        // redireciona com dados na URL (sem localStorage)
         window.location.href =
             "verificar_token.html?type=" + tipo +
             "&email=" + encodeURIComponent(email);
@@ -401,7 +340,6 @@ async function pedirToken(tipo) {
     }
 }
 
-
 function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
     return {
@@ -410,7 +348,7 @@ function getQueryParams() {
     };
 }
 
-
+// VERIFICAR TOKEN
 async function verificar_token() {
     const { email, tokenType } = getQueryParams();
     const token = document.getElementById("token").value;
@@ -443,31 +381,25 @@ async function verificar_token() {
     if (response.ok) {
         alert(data.message);
 
-        // redirecionamento baseado no tipo
-
         if (tokenType === "register") {
             window.location.href = `criar_senha.html?email=${encodeURIComponent(email)}`;
-        }
-
-        else if (tokenType === "login") {
+        } else if (tokenType === "login") {
             window.location.href = `verificar_senha.html?email=${encodeURIComponent(email)}`;
-        }
-        else if (tokenType === "vote") {
+        } else if (tokenType === "vote") {
             window.location.href = "votar.html";
-        }
-        else if (tokenType === "create") {
+        } else if (tokenType === "create") {
             window.location.href = "criar_eleicao.html";
         }
 
     } else {
         alert(data.error)
-        if (response.status === 429) { // Se muitas tentativas, volta para o início
+        if (response.status === 429) {
             window.location.href = "index.html";
         }
     }
 }
 
-
+// CRIAR PASSWORD
 async function criarSenha() {
     const password = document.getElementById("password").value;
     const confirmarPassword = document.getElementById("confirmar_password").value;
@@ -493,7 +425,7 @@ async function criarSenha() {
         body: JSON.stringify({ email, password })
     });
 
-    const data = await response.json(); //envia para o backend, que processa o "response" e devolve um "data" com a mensagem de sucesso ou erro
+    const data = await response.json();
 
     if (response.ok) {
         alert(data.message);
@@ -501,9 +433,9 @@ async function criarSenha() {
     } else {
         alert(data.error);
     }
-}   
+}
 
-
+// VERIFICAR PASSWORD
 async function verificarSenha() {
     const password = document.getElementById("verificar_password").value;
 
