@@ -1,11 +1,13 @@
 import datetime
 import os
+import base64
 
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from dotenv import load_dotenv #para ser possivel buscar password apartir do .env
+from auth import generate_salt, hash_password, verify_password
 from flask import Flask, request, jsonify
 
 
@@ -124,7 +126,6 @@ def issue_user_cert(ca_key, ca_cert, user_name):
 
     return user_key_pem, user_cert_pem
 
-app = Flask(__name__)
 ca_key, ca_cert = create_ca()
 
 @app.post("/sign")
@@ -145,6 +146,19 @@ if __name__ == "__main__":
 
 
 
+
+users = {}
+
+@app.post("/hash-password")
+def hash_pw():
+    data = request.json
+    salt = generate_salt()
+    hashed = hash_password(data["password"], salt)
+
+    return jsonify({
+        "salt": base64.b64encode(salt).decode(),
+        "hash": hashed
+    })
 #teste:
 #if __name__ == "__main__":
 #    ca_key, ca_cert = create_ca()
