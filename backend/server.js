@@ -32,8 +32,8 @@ app.post("/login", async (req, res) => {
 
     const existingUser = await User.findOne({ email });
 
-    if (!existingUser) {
-        return res.status(404).json({ error: "Utilizador não encontrado" });
+    if (existingUser) {
+        return res.status(404).json({ error: "Utilizador já existe" });
     }
 
 

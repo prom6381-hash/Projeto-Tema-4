@@ -298,7 +298,14 @@ async function pedir_token() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
+    
     });
+
+    if (response .status === 404) {
+        window.location.href = "index.html";
+        return;
+    }
+
 
     const data = await response.json();
     alert(data.message);
