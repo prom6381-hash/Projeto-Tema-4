@@ -7,9 +7,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from dotenv import load_dotenv #para ser possivel buscar password apartir do .env
-from auth import generate_salt, hash_password, verify_password
 from flask import Flask, request, jsonify
-
+from auth import generate_salt, hash_password, verify_password
 
 load_dotenv() 
 
@@ -140,6 +139,25 @@ def sign():
         "privateKey": key.decode()
     })
 
+
+
+@app.post("/hash-password") #usa funçoes do auth.py para gerar um salt e hashear a password, retornando ambos para o cliente (que os irá guardar para futuras autenticações)
+def hash_pw():
+
+    data = request.json
+
+    password = data["password"]
+
+    salt = generate_salt()
+
+    hashed = hash_password(password, salt)
+
+    return jsonify({
+        "salt": base64.b64encode(salt).decode(),
+        "hash": hashed
+    })
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
 
@@ -147,18 +165,7 @@ if __name__ == "__main__":
 
 
 
-users = {}
 
-@app.post("/hash-password")
-def hash_pw():
-    data = request.json
-    salt = generate_salt()
-    hashed = hash_password(data["password"], salt)
-
-    return jsonify({
-        "salt": base64.b64encode(salt).decode(),
-        "hash": hashed
-    })
 #teste:
 #if __name__ == "__main__":
 #    ca_key, ca_cert = create_ca()
