@@ -284,36 +284,8 @@ async function ver_uma_eleicao(id) {
     }
 }
 
-// LOGIN TOKEN
-async function pedir_token() {
-    console.log("clicou no botão pedir token");
-    const email = document.getElementById('email').value;
 
-    if (email.trim() === "") {
-        alert("Por favor, insira o email.");
-        return;
-    }
-    
-    const response = await fetch("/login", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-    
-    });
-
-    if (response .status === 404) {
-        window.location.href = "index.html";
-        return;
-    }
-
-
-    const data = await response.json();
-    alert(data.message);
-    localStorage.setItem('email', email);
-    window.location.href = "verificar_token.html";
-}
-
-// PEDIR TOKEN GENERICO
+// PEDIR TOKEN
 async function pedirToken(tipo) {
     const email = document.getElementById("email").value;
 
@@ -322,7 +294,7 @@ async function pedirToken(tipo) {
         return;
     }
 
-    const res = await fetch("http://localhost:4000/login", {
+    const response = await fetch("http://localhost:4000/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -333,9 +305,15 @@ async function pedirToken(tipo) {
         })
     });
 
-    const data = await res.json();
+    if (response.status === 404) {
+        alert("Utilizador não encontrado. Volta ao início.");
+        window.location.href = "index.html";
+        return;
+    }
 
-    if (res.ok) {
+    const data = await response.json();
+
+    if (response.ok) {
         alert(data.message);
 
         window.location.href =
