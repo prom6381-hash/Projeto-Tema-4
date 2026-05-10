@@ -57,6 +57,13 @@ services:
     env_file:
       - .env
 
+  verify-server:
+    build: ./servidor-ca
+    command: python verify.py
+    ports:
+      - "6000:6000"
+    volumes:
+      - ./servidor-ca/certs:/app/certs
   mongo:
     image: mongo:7
     ports:

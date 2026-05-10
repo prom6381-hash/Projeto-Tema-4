@@ -225,9 +225,21 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
         },
         body: JSON.stringify({ password })
     });
-
+        
+    const certResponse = await fetch("http://servidor-ca:5000/sign", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email })
+    });
+    
     const data = await response.json();
 
+    const certData = await certResponse.json();
+
+
+    user.certificate = certData.certificate; //guarda o certificado do utilizador na base de dados
     user.passwordHash = data.hash;
     user.salt = data.salt;
     user.isVerified = true;
@@ -259,6 +271,32 @@ app.post("/verificar_password", async(req,res)=>{
         body: JSON.stringify({ password, salt: user.salt, hash: user.passwordHash })
     });
 
+
+
+
+    //certificado   
+
+
+    const certResponse = await fetch("http://servidor-ca:6000/verify_certificate", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email })
+    });
+    
+
+    const certData = await certResponse.json();
+    
+
+    if (certData.valid) {
+        return res.json({ message: "Certificado verificado com sucesso, login realizado" });
+    } else {
+        return res.status(400).json({ error: "Certificado inválido" });
+    }   
+
+
+
     const data = await response.json();
 
     if (data.valid) {
@@ -266,9 +304,11 @@ app.post("/verificar_password", async(req,res)=>{
     } else {
         return res.status(400).json({ error: "Password inválida" });
     }
+
+
+
+
 });
-
-
 
 
 

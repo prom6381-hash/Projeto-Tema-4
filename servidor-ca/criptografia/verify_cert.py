@@ -3,7 +3,7 @@ import datetime
 
 from flask import Flask, request, jsonify
 from cryptography import x509
-from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import serialization, hashes
 
 app = Flask(__name__)
@@ -16,7 +16,7 @@ with open(os.path.join(CA_DIR, "ca_cert.pem"), "rb") as f: #carrega o certificad
 
 ca_public_key = ca_cert.public_key()
 
-@app.route("/verify_certificate")
+@app.post("/verify_certificate")
 def verify_certificate():
 
     try:
@@ -34,13 +34,19 @@ def verify_certificate():
             cert.signature_hash_algorithm
         )
 
-        if now > cert.not_valid_after_utc():
-            return jsonify({"valid": False, "error": "Certificado expirado"}), 
+        now = datetime.datetime.now(datetime.timezone.utc)
 
-        return jsonify({"valid": True})
+        if now < cert.not_valid_before_utc:
+            return jsonify({"valid": False, "error": "Certificado ainda não é válido"}), 
+
+        if now > cert.not_valid_after_utc:
+            return jsonify({"valid": False, "error": "Certificado expirado"}), 
+        
+
+        return jsonify({"valid": True, "subject": cert.subject.rfc4514_string()}), #retorna o assunto do certificado se for válido
     
     except Exception as e: #qualquer erro na verificação é tratado como certificado inválido
-        return jsonify({"valid": False, "error": str(e)}), 400
+        return jsonify({"valid": False, "error": str(e)}), 400 #str converte o erro para string para enviar na resposta
     
 
 if __name__ == "__main__":
