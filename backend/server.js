@@ -273,6 +273,11 @@ app.post("/verificar_password", async(req,res)=>{
 
 
 
+    const data = await response.json();
+
+    if (!data.valid) {
+        return res.status(400).json({ error: "Password inválida" });
+    }
 
     //certificado   
 
@@ -282,32 +287,18 @@ app.post("/verificar_password", async(req,res)=>{
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ certificate: user.certificate })
     });
     
 
     const certData = await certResponse.json();
     
 
-    if (certData.valid) {
-        return res.json({ message: "Certificado verificado com sucesso, login realizado" });
-    } else {
+    if (!certData.valid) {
         return res.status(400).json({ error: "Certificado inválido" });
-    }   
-
-
-
-    const data = await response.json();
-
-    if (data.valid) {
-        return res.json({ message: "Password verificada com sucesso, login realizado" });
-    } else {
-        return res.status(400).json({ error: "Password inválida" });
     }
 
-
-
-
+    return res.json({ message: "Autenticação bem-sucedida", subject: certData.subject });
 });
 
 
