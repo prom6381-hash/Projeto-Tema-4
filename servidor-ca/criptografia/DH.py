@@ -7,7 +7,7 @@ parametros=dh.generate_parameters(generator=2,key_size=2048)
 
 def geraracao_chaves():
     chave_privada=parametros.generate_private_key()
-    chave_publica=chave_privada.publick_key()
+    chave_publica=chave_privada.public_key()
     return chave_privada,chave_publica
 
 def serializar_publica(chave_publica):
@@ -26,7 +26,7 @@ def calculo_chave_sessao(privada_local,publica_remota):
         algorithm=hashes.SHA256(),
         length=32,
         salt=None,
-        info='sistema-de-votação-eletrónica',
+        info=b'sistema-de-votacao-eletronica',
     ).derive(segredo_shared)
 
     return chave_sessao

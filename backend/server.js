@@ -3,11 +3,14 @@
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
+const crypto= require("crypto");
 const { generateToken } = require("./utils/token");
 const { sendTokenEmail } = require("./utils/email");
 const { hashToken } = require("./utils/hmac");
 const Token = require("./models/Token");
 const User = require("./models/User");
+const Voto = require("./models/Voto");
+const Eleicao= require("./models/election");
 const app = express();
 
 app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
@@ -22,6 +25,43 @@ app.use(express.json());
 const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
 
 // - Pedir token - login
+
+const sessoesVotar={}; // armazenar temporariamente as sessões de votação a ocorrerem
+
+
+async function gerarchavesDH(){
+    const response= await fetch("http://servidor-ca:5000/dh/gerar-chaves", {method: "POST"});
+    return await response.json();
+}
+
+async function calculoChaveSessao(chavepub_remota){
+    const response= await fetch("http://servidor-ca:5000/dh/chave-sessao", {method: "POST", headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({chave_publica_remota: chavepub_remota})});
+    return await response.json();
+}
+
+async function assinaturaRSA(chavepubRSA,dados,assinatura){
+    const response= await fetch("http://servidor-ca:5000/rsa/integridade", {method: "POST", headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({chave_publica: chavepubRSA,
+        dados: dados,
+        assinatura: assinatura
+    })});
+    return await response.json();
+}
+
+async function desencriptarVoto(chave,AAD,iv,votoCifrado,tag){
+    const response= await fetch("http://servidor-ca:5000/aes/desencriptar", {method: "POST", headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({chave:chave, 
+        data_associada:AAD,
+        iv:iv,
+        voto_cifrado:votoCifrado,
+        tag:tag
+    })});
+    return await response.json();
+}
+
+
+
 
 app.post("/login", async (req, res) => {
     const { email, tokenType } = req.body;
@@ -165,9 +205,87 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 });
 
 
+app.post(("/api/iniciar-votacao", async (req,res)=>{
+    try{
+        const {email,chavepub_remota,assinatura}= req.body;
+        if (!email || !chavepub_remota || !assinatura){
+            return res.status(400).json({error:"Dados incompletos ou não preenchidos!"});
+        }
 
+        const user=await User.findOne({email});
+        if (!user){
+            return res.status(404).json({error:"Utilizador não foi encontrado!"});
+        }
 
+        if (!user.chavePublicaRSA){
+            return res.status(400).json({error:"Não foi registado a chave RSA!"});
+        }
 
+        const verificar= await assinaturaRSA(
+            user.chavePublicaRSA,
+            chavepub_remota,
+            assinatura
+        );
+
+        if (!verificar.valida){
+            return res.status(401).json({error: "Autenticação com a assinatura falhou!!"});
+        }
+
+        const chavesDH= await gerarchavesDH();
+        const sessao= await calculoChaveSessao(chavepub_remota);
+        const idSessao= crypto.randomBytes(16).toString("hex");
+
+        sessoesVotar[idSessao]={
+            email:email,
+            chaveSessao:sessao.chave_sessao
+
+        };
+        return res.json({
+            id_sessao: idSessao,
+            chave_publica_dh: chavesDH.chave_publica
+        });
+
+    }  catch (erro){
+        console.error("Erro ao começar a votação, o erro foi:", erro);
+        return res.status(500).json({error: "Houve um erro interno ao começar a votação!"})
+    }
+}))
+
+app.post("/api/votar", async(req,res)=>{
+    try{
+        const {id_sessao,votoCifrado,iv,tag,AAD,idEleicao}= req.body;
+        if (!id_sessao || !votoCifrado || !iv || !tag || !AAD || !idEleicao){
+            return res.status(400).json({error:"Dados incompletos ou não preenchidos!"});
+        }
+
+        if (!sessoesVotar[id_sessao]){
+            return res.status(401).json({error:"A sessão é inválida ou expirou!"});
+        }
+
+        const sessao=sessoesVotar[id_sessao];
+        const desencriptado= await desencriptarVoto(
+            sessao.chaveSessao,
+            AAD || idEleicao,
+            iv,
+            votoCifrado,
+            tag
+        );
+
+        const guardarVoto= new Voto({
+            eleicaoId: idEleicao,
+            candidato: desencriptado.voto,
+            eleitor: sessao.email
+        });
+        await guardarVoto.save();
+
+        delete sessoesVotar[id_sessao];
+        return res.json({ message: "O voto foi corretamente registado!"});
+
+    } catch(erro){
+        console.error("Houve um erro ao votar, que foi:", erro);
+        return res.status(500).json({error: "Houve um erro interno ao tentar registar o voto!"})
+    }
+})
 
 // FAZER a parte que corre resultados de eleições
 app.get("/api/eleicoes/:id/resultado", async(req,res)=>{
