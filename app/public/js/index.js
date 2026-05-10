@@ -305,7 +305,7 @@ async function pedirToken(tipo) {
         })
     });
 
-    if (response.status === 404) {
+    if (tipo === "register" && response.status === 404) {
         alert("Utilizador já existe. Por favor, insira um email diferente.");
         window.location.href = "index.html";
         return;

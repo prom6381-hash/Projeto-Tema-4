@@ -40,17 +40,17 @@ def verify_certificate():
             return jsonify({"valid": False, "error": "Certificado ainda não é válido"}), 
 
         if now > cert.not_valid_after_utc:
-            return jsonify({"valid": False, "error": "Certificado expirado"}), 
+            return jsonify({"valid": False, "error": "Certificado expirado"})
         
 
-        return jsonify({"valid": True, "subject": cert.subject.rfc4514_string()}), #retorna o assunto do certificado se for válido
+        return jsonify({"valid": True, "subject": cert.subject.rfc4514_string()}) #retorna o assunto do certificado se for válido
     
     except Exception as e: #qualquer erro na verificação é tratado como certificado inválido
-        return jsonify({"valid": False, "error": str(e)}), 400 #str converte o erro para string para enviar na resposta
+        return jsonify({"valid": False, "error": str(e)}) #str converte o erro para string para enviar na resposta
     
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=6000)
+    app.run(host="0.0.0.0", port=6060)
 
 
     

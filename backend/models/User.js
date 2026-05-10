@@ -11,12 +11,10 @@ const UserSchema = new mongoose.Schema({
 
     salt: {
         type: String,
-        required: true,
     },  
 
     passwordHash: {
         type: String,
-        required: true
     },
 
     isVerified: {

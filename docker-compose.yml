@@ -63,7 +63,7 @@ services:
       dockerfile: Dockerfile
     command: python criptografia/verify_cert.py
     ports:
-      - "6000:6000"
+      - "6060:6060"
     volumes:
       - ./servidor-ca:/app
     networks:

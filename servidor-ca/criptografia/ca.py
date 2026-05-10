@@ -125,7 +125,20 @@ def issue_user_cert(ca_key, ca_cert, user_name):
 
     return user_key_pem, user_cert_pem
 
-ca_key, ca_cert = create_ca()
+ca_key_path = os.path.join(CA_DIR, "ca_key.pem")
+ca_cert_path = os.path.join(CA_DIR, "ca_cert.pem")
+
+if os.path.exists(ca_key_path) and os.path.exists(ca_cert_path):
+    with open(ca_key_path, "rb") as f:
+        ca_key = serialization.load_pem_private_key(f.read(), password=password)
+
+    with open(ca_cert_path, "rb") as f:
+        ca_cert = x509.load_pem_x509_certificate(f.read())
+        print("CA carregada com sucesso")
+else:
+    print("CA não encontrada, criando nova CA...")
+    ca_key, ca_cert = create_ca()
+    print("Nova CA criada com sucesso")
 
 app = Flask(__name__)
 

@@ -32,11 +32,22 @@ app.post("/login", async (req, res) => {
 
     const existingUser = await User.findOne({ email });
 
-    if (existingUser) {
+    if (existingUser && tokenType === "register") {
         return res.status(404).json({ error: "Utilizador já existe" });
     }
 
 
+    if (!existingUser && tokenType === "login") {
+        return res.status(404).json({ error: "Utilizador não encontrado" });
+    }
+
+    if (tokenType !== "register" && tokenType !== "login" && tokenType !== "vote" && tokenType !== "create") {
+        return res.status(400).json({ error: "Tipo de token inválido" });
+    }
+
+    if (!existingUser) {
+        await User.create({ email, isVerified: false }); //cria um novo utilizador com o email fornecido e isVerified como false (antes de criar password)
+    }
 
     //token.js criar token
     const token = generateToken();
@@ -94,7 +105,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 
 
 
-
+    
     // Verificar se o tipo do token corresponde
     if (tokenData.tokenType !== tokenType) {
         tokenData.attempts += 1;
@@ -281,8 +292,7 @@ app.post("/verificar_password", async(req,res)=>{
 
     //certificado   
 
-
-    const certResponse = await fetch("http://servidor-ca:6000/verify_certificate", {
+    const certResponse = await fetch("http://verify-server:6060/verify_certificate", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
