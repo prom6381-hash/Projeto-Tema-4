@@ -205,7 +205,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 });
 
 
-app.post(("/api/iniciar-votacao", async (req,res)=>{
+app.post("/api/iniciar-votacao", async (req,res)=>{
     try{
         const {email,chavepub_remota,assinatura}= req.body;
         if (!email || !chavepub_remota || !assinatura){
@@ -249,7 +249,7 @@ app.post(("/api/iniciar-votacao", async (req,res)=>{
         console.error("Erro ao começar a votação, o erro foi:", erro);
         return res.status(500).json({error: "Houve um erro interno ao começar a votação!"})
     }
-}))
+})
 
 app.post("/api/votar", async(req,res)=>{
     try{
