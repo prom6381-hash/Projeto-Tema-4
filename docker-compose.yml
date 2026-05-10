@@ -49,11 +49,9 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - CA_CERT=/app/ca_cert.pem
-      - CA_KEY=/app/ca_key.pem
+      - CA_PASSWORD=${CA_PASSWORD}
     volumes:
       - ./servidor-ca:/app
-      - ./servidor-ca/certificados:/app/certificados
     networks:
       - network_sistema_todo
     env_file:
@@ -67,7 +65,20 @@ services:
       - mongo_data:/data/db
     networks:
       - network_sistema_todo
-
+  nginx:
+    image: nginx:latest
+    container-name: nginx
+    ports:
+     - "80:80"
+     - "443:443"
+    depends_on:
+     - app
+    volumes:
+     - ./certs:/etc/nginx/certs:ro
+     - ./nginx/app.conf:/etc/nginx/conf.d/app.conf:ro
+    networks:
+     - network_sistema_todo
+    restart: unless-stopped
       
 networks:
   network_sistema_todo:

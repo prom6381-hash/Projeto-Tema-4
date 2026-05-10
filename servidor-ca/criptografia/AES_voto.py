@@ -19,16 +19,3 @@ def desencriptar(chave, data_associada,iv,voto_cifrado,tag):
 
     return decifra.update(voto_cifrado) + decifra.finalize()
 
-iv, voto_cifrado, tag = encriptar(
-    chave,
-    b"a secret message!",
-    b"authenticated but not encrypted payload"
-)
-
-print(desencriptar(
-    chave,
-    b"authenticated but not encrypted payload",
-    iv,
-    voto_cifrado,
-    tag
-))

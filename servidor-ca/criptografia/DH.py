@@ -1,61 +1,32 @@
 from cryptography.hazmat.primitives import hashes
-
-from cryptography.hazmat.primitives.asymmetric import dh
-
+from cryptography.hazmat.primitives import dh
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
-# Generate some parameters. These can be reused.
+parametros=dh.generate_parameters(generator=2,key_size=2048)
 
-parameters = dh.generate_parameters(generator=2, key_size=2048)
+def geraracao_chaves():
+    chave_privada=parametros.generate_private_key()
+    chave_publica=chave_privada.publick_key()
+    return chave_privada,chave_publica
 
-# Generate a private key for use in the exchange.
+def serializar_publica(chave_publica):
+    return chave_publica.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
 
-private_key = parameters.generate_private_key()
+def deserializar_publica(chave_bytes):
+    return serialization.load_pem_public_key(chave_bytes)
 
-# In a real handshake the peer_public_key will be received from the
+def calculo_chave_sessao(privada_local,publica_remota):
+    segredo_shared=privada_local.exchange(publica_remota)
 
-# other party. For this example we'll generate another private key and
+    chave_sessao= HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=None,
+        info='sistema-de-votação-eletrónica',
+    ).derive(segredo_shared)
 
-# get a public key from that. Note that in a DH handshake both peers
-
-# must agree on a common set of parameters.
-
-peer_public_key = parameters.generate_private_key().public_key()
-
-shared_key = private_key.exchange(peer_public_key)
-
-# Perform key derivation.
-
-derived_key = HKDF(
-
-    algorithm=hashes.SHA256(),
-
-    length=32,
-
-    salt=None,
-
-    info=b'handshake data',
-
-).derive(shared_key)
-
-# For the next handshake we MUST generate another private key, but
-
-# we can reuse the parameters.
-
-private_key_2 = parameters.generate_private_key()
-
-peer_public_key_2 = parameters.generate_private_key().public_key()
-
-shared_key_2 = private_key_2.exchange(peer_public_key_2)
-
-derived_key_2 = HKDF(
-
-    algorithm=hashes.SHA256(),
-
-    length=32,
-
-    salt=None,
-
-    info=b'handshake data',
-
-).derive(shared_key_2)
+    return chave_sessao

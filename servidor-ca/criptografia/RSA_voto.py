@@ -2,46 +2,49 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.exceptions import InvalidSignature
 
 
-with open("ficheiro.pem","rb") as x:
-    msg=x.read()
+def gerar_chaves_rsa():
+    privatekey= rsa.generate_private_key(public_exponent=65537,key_size=2048)
+    publickey= privatekey().public_key()
 
-gerar_privatekey= rsa.generate_private_key(public_exponent=65537,key_size=2048)
+    return privatekey, publickey
 
-publickey= gerar_privatekey().public_key()
+def serializar_privada(chave_privada):
+    return chave_privada.private_bytes(                                                                     #este guarda em plaintext o outro não
+    encoding=serialization.Encoding.PEM,format=serialization.PrivateFormat.PKCS8,encryption_algorithm=serialization.NoEncryption() #não utilizamos BestAvaibleEncryption para ser mais fácil fazer o trabalho, se tivermos tempo, mudamos para o outro
+    )                                                                                                                               #isto é pq é preciso ir buscar a password fornecida pelo user para fazer isto, que é mais complicado
 
-pem_privatekey=gerar_privatekey.private_bytes(
-    encoding=serialization.Encoding.PEM,format=serialization.PrivateFormat.PKCS8,encryption_algorithm=serialization.BestAvailableEncryption()
+def privada_serializada(chave_pem):
+    return serialization.load_pem_private_key(chave_pem)
+
+def serializar_publica(chave_publica):
+    return chave_publica.public_bytes(
+    encoding=serialization.Encoding.PEM,format=serialization.PublicFormat.SubjectPublicKeyInfo)
+
+def publica_serializada(chave_pem):
+    return serialization.load_pem_public_key(chave_pem)
+
+def assinatura(chave_privada,dados):
+    return chave_privada.sign(dados,padding.PSS(   #nao utilizamos padding OAEP, pq essa é para encriptar e esta é para auntenticar, já que fazemos aqui a assinatura
+        mgf=padding.MGF1(                        #ou seja encriptamos com AES e autenticamos com RSA, pq vários votos ao msm tempo com encriptação RSA é demasiado lento
+        algorithm=hashes.SHA256()
+        ),
+        salt_length=padding.PSS.MAX_LENGTH
+    ),
+    hashes.SHA256()
 )
 
-with open("chave_privada.pem","wb") as x:
-    x.write(pem_privatekey)
-
-pem_publickey=publickey.public_bytes(encoding=serialization.Encoding.PEM,format=serialization.PublicFormat.SubjectPublicKeyInfo)
-
-
-with open("chave_pública.pem","wb") as x:
-    x.write(pem_publickey)
-
-
-voto="Candidato"
-voto_cifrado=publickey.encrypt(voto,padding.OAEP(
-    mgf=padding.MGF1(
+def verifica_assinatura(chave_publica,dados,assinatura):
+    try:
+        chave_publica.verify(assinatura,dados,padding.PSS(   
+        mgf=padding.MGF1(                        
         algorithm=hashes.SHA256()
-    ),
-    algorithm=hashes.SHA256(),
-    label=None
-))
-
-print(voto_cifrado)
-
-voto_decifrado=gerar_privatekey.decrypt(voto_cifrado,padding.OAEP(
-    mgf=padding.MGF1(
-        algorithm=hashes.SHA256()
-    ),
-    algorithm=hashes.SHA256(),
-    label=None
-))
-
-print(voto_decifrado)
+        ),
+        salt_length=padding.PSS.MAX_LENGTH
+        ),
+        hashes.SHA256())
+        return True
+    except InvalidSignature:
+        return False

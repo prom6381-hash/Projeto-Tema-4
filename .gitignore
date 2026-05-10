@@ -3,3 +3,5 @@ node_modules/
 *.pem
 *.key
 /servidor_CA/certs/
+*.pyc
+__pycache__/
