@@ -1,6 +1,6 @@
-const mondoose = require("mongoose")
+const mongoose = require("mongoose");
 
-const election = new mondoose.Schema (
+const election = new mongoose.Schema (
   {
     nome: {
       type: String,
