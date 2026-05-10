@@ -58,12 +58,18 @@ services:
       - .env
 
   verify-server:
-    build: ./servidor-ca
-    command: python verify.py
+    build: 
+      context: ./servidor-ca
+      dockerfile: Dockerfile
+    command: python criptografia/verify_cert.py
     ports:
       - "6000:6000"
     volumes:
-      - ./servidor-ca/certs:/app/certs
+      - ./servidor-ca:/app
+    networks:
+      - network_sistema_todo
+    env_file:
+      - .env
   mongo:
     image: mongo:7
     ports:
@@ -74,7 +80,7 @@ services:
       - network_sistema_todo
   nginx:
     image: nginx:latest
-    container-name: nginx
+    container_name: nginx
     ports:
      - "80:80"
      - "443:443"
