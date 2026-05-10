@@ -306,7 +306,7 @@ async function pedirToken(tipo) {
     });
 
     if (response.status === 404) {
-        alert("Utilizador não encontrado. Volta ao início.");
+        alert("Utilizador já existe. Por favor, insira um email diferente.");
         window.location.href = "index.html";
         return;
     }

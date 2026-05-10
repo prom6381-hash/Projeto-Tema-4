@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives import serialization, hashes
 
 app = Flask(__name__)
 
-BASE_DIR = "/certificados"
+BASE_DIR = "/app/certs" #
 CA_DIR = os.path.join(BASE_DIR, "ca")
 
 with open(os.path.join(CA_DIR, "ca_cert.pem"), "rb") as f: #carrega o certificado do CA para verificar os certificados dos utilizadores
