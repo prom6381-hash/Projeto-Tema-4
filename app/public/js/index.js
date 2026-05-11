@@ -230,41 +230,66 @@ async function ver_uma_eleicao(id) {
 
 // PEDIR TOKEN
 async function pedirToken(tipo) {
-    const email = document.getElementById("email").value;
 
-    if (!email || email.trim() === "") {
-        alert("Por favor, insere o email.");
-        return;
-    }
 
-    const response = await fetch("http://localhost:4000/login", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            email,
-            tokenType: tipo
-        })
-    });
+    if (tipo == "login" || tipo == "register") {
+        const email = document.getElementById("email").value;
 
-    if (tipo === "register" && response.status === 404) {
-        alert("Utilizador já existe. Por favor, insira um email diferente.");
-        window.location.href = "index.html";
-        return;
-    }
+        if (!email || email.trim() === "") {
+            alert("Por favor, insere o email.");
+            return;
+        }
 
-    const data = await response.json();
+        const response = await fetch("http://localhost:4000/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                email,
+                tokenType: tipo
+            })
+        });
 
-    if (response.ok) {
-        alert(data.message);
+        if (tipo === "register" && response.status === 404) {
+            alert("Utilizador já existe. Por favor, insira um email diferente.");
+            window.location.href = "index.html";
+            return;
+        }
 
-        window.location.href =
-            "verificar_token.html?type=" + tipo +
-            "&email=" + encodeURIComponent(email);
+        const data = await response.json();
 
-    } else {
-        alert(data.error);
+        if (response.ok) {
+            alert(data.message);
+
+            window.location.href =
+                "verificar_token.html?type=" + tipo +
+                "&email=" + encodeURIComponent(email);
+
+        } else {
+            alert(data.error);
+        }
+    } else if (tipo === "vote" || tipo === "create") {
+        const response = await fetch("http://localhost:4000/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"},
+            credentials: "include",
+            body: JSON.stringify({
+                tokenType: tipo
+            })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(data.message);
+            window.location.href =
+                "verificar_token.html?type=" + tipo;
+        } else {
+            alert(data.error);
+        }      
+    } else {   
+        alert("Tipo de token desconhecido.");
     }
 }
 
@@ -394,5 +419,4 @@ async function verificarSenha() {
 }
 
 
-async function id_votacao() {
     

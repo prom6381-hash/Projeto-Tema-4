@@ -2,6 +2,7 @@
 // Token para verificar email (Atutenticação)
 require("dotenv").config();
 const express = require("express");
+const session = require("express-session");
 const path = require("path");
 const crypto= require("crypto");
 const { generateToken } = require("./utils/token");
@@ -14,7 +15,12 @@ const Eleicao= require("./models/election");
 const app = express();
 
 app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
-
+app.use(session({
+    secret: process.env.JWT_SECRET || "segredo", // segredo para assinar a sessão, deve ser uma string longa e segura em produção
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, maxAge: 1 * 60 * 60 * 1000 } // LEMBRAR DE COLOCAR TRUE QUANDO TIVERMOS HTTPS. funciona 1 hora
+}));
 
 
 const connectDB = require("./base_de_dados.js");
@@ -64,9 +70,21 @@ async function desencriptarVoto(chave,AAD,iv,votoCifrado,tag){
 
 
 app.post("/login", async (req, res) => {
-    const { email, tokenType } = req.body;
+    const {tokenType } = req.body;
     
-    if (!email || !tokenType) {
+
+    if (!tokenType) {
+        return res.status(400).json({ error: "Dados inválidos" });
+    }
+
+    if (tokenType == "vote" || tokenType == "create") {
+        if (!req.session || !req.session.user || !req.session.user.email) {
+            return res.status(401).json({ error: "O utilizador não está autenticado!" });
+        }
+    }
+    const email = req.session.user.email;
+
+    if (!tokenType) {
         return res.status(400).json({ error: "Dados inválidos" });
     }
 
@@ -74,6 +92,10 @@ app.post("/login", async (req, res) => {
 
     if (existingUser && tokenType === "register") {
         return res.status(404).json({ error: "Utilizador já existe" });
+    }
+
+    if (!existingUser && tokenType === "register") {
+        await User.create({ email, isVerified: false }); //cria um novo utilizador com o email fornecido e isVerified como false (antes de criar password)
     }
 
 
@@ -85,9 +107,6 @@ app.post("/login", async (req, res) => {
         return res.status(400).json({ error: "Tipo de token inválido" });
     }
 
-    if (!existingUser) {
-        await User.create({ email, isVerified: false }); //cria um novo utilizador com o email fornecido e isVerified como false (antes de criar password)
-    }
 
     //token.js criar token
     const token = generateToken();
@@ -207,12 +226,17 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 
 app.post("/api/iniciar-votacao", async (req,res)=>{
     try{
-        const {email,chavepub_remota,assinatura}= req.body;
+        const {chavepub_remota,assinatura}= req.body;
         if (!email || !chavepub_remota || !assinatura){
             return res.status(400).json({error:"Dados incompletos ou não preenchidos!"});
         }
 
-        const user=await User.findOne({email});
+
+        if (!req.session || !req.session.user || !req.session.user.email){
+            return res.status(401).json({error:"O utilizador não está autenticado!"});
+        }
+
+        const user=await User.findOne({ _id: req.session.user.id });
         if (!user){
             return res.status(404).json({error:"Utilizador não foi encontrado!"});
         }
@@ -236,7 +260,7 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
         const idSessao= crypto.randomBytes(16).toString("hex");
 
         sessoesVotar[idSessao]={
-            email:email,
+            email:user.email,
             chaveSessao:sessao.chave_sessao
 
         };
@@ -442,6 +466,14 @@ app.post("/verificar_password", async(req,res)=>{
 
     if (!certData.valid) {
         return res.status(400).json({ error: "Certificado inválido" });
+    }
+
+    return res.json({ message: "Autenticação bem-sucedida", subject: certData.subject });
+
+    req.session.user = {
+    email: "user.email",
+    isVerified: true,
+    id: user._id
     }
 
     return res.json({ message: "Autenticação bem-sucedida", subject: certData.subject });
