@@ -2,6 +2,13 @@ const mongoose = require("mongoose");
 
 const eleicaoSchema  = new mongoose.Schema (
   {
+    codigo: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    
     nome: {
       type: String,
       required: true,

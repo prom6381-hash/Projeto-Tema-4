@@ -26,7 +26,7 @@ function remover_candidato() {
 }
 
 // - Botão Criar Eleição
-function criar_eleicao() {
+async function criar_eleicao() {
     const nomeEleicao = document.getElementById('nome-eleicao').value;
     if (nomeEleicao.trim() === "") {
         alert("Por favor, insira o nome da eleição.");
@@ -40,20 +40,20 @@ function criar_eleicao() {
         return;
     }
 
-    const dataInicio = document.getElementById('data-inicio').value;
-    if (dataInicio === "") {
+    const data_inicio = document.getElementById('data-inicio').value;
+    if (data_inicio === "") {
         alert("Por favor, insira a data de início.");
         return;
     }
 
-    const dataFim = document.getElementById('data-fim').value;
-    if (dataFim === "") {
+    const data_fim = document.getElementById('data-fim').value;
+    if (data_fim === "") {
         alert("Por favor, insira a data de fim.");
         return;
     }
 
-    const inicio = new Date(dataInicio);
-    const fim = new Date(dataFim);
+    const inicio = new Date(data_inicio);
+    const fim = new Date(data_fim);
 
     if (fim <= inicio) {
         alert("A data de fim não pode ser anterior/igual à data de início.");
@@ -76,10 +76,34 @@ function criar_eleicao() {
 
     console.log("Eleição Criada:", nomeEleicao);
     console.log("Candidatos:", candidatos);
-    console.log("Data de Início:", dataInicio);
-    console.log("Data de Fim:", dataFim);
+    console.log("Data de Início:", data_inicio);
+    console.log("Data de Fim:", data_fim);
 
-    alert(`Eleição '${nomeEleicao}' criada com ${candidatos.length} candidatos de ${dataInicio} a ${dataFim}!`);
+    try {
+        const resposta = await fetch("http://localhost:4000/criar-eleicao", {    
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({
+                nome: nomeEleicao,
+                candidatos,
+                data_inicio,
+                data_fim
+            })
+        }) 
+        const data = await resposta.json();
+            if (resposta.ok) {
+                alert(`Eleição criada! Código: ${data.codigo}`);
+                console.log("CODIGO DA ELEIÇÃO:", data.codigo);
+                window.location.href = "votar_ou_criar.html";
+            }  else {
+                alert(data.error);
+            }
+} catch (error) {
+    alert("Erro ao criar a eleição. Tente novamente mais tarde.");
+}
 }
 
 async function pedirTokenLogin() {
@@ -130,16 +154,16 @@ async function ver_resultados() {
             titulo.textContent = eleicao.nome;
             cartao.appendChild(titulo);
             
-            const dataComeco = new Date(eleicao.dataInicio).toLocaleDateString('pt-PT');
-            const dataAcaba = new Date(eleicao.dataFim).toLocaleDateString('pt-PT');
+            const dataComeco = new Date(eleicao.data_inicio).toLocaleDateString('pt-PT');
+            const dataAcaba = new Date(eleicao.data_fim).toLocaleDateString('pt-PT');
             
             const data = document.createElement('p');
             data.textContent = `Eleição ocorre de ${dataComeco} até ${dataAcaba}`;
             cartao.appendChild(data);
             
             const atual = new Date();
-            const comeco = new Date(eleicao.dataInicio);
-            const acaba = new Date(eleicao.dataFim);
+            const comeco = new Date(eleicao.data_inicio);
+            const acaba = new Date(eleicao.data_fim);
             let estado;
             
             if (atual >= comeco && atual <= acaba) {
@@ -230,41 +254,67 @@ async function ver_uma_eleicao(id) {
 
 // PEDIR TOKEN
 async function pedirToken(tipo) {
-    const email = document.getElementById("email").value;
 
-    if (!email || email.trim() === "") {
-        alert("Por favor, insere o email.");
-        return;
-    }
 
-    const response = await fetch("http://localhost:4000/login", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            email,
-            tokenType: tipo
-        })
-    });
+    if (tipo == "login" || tipo == "register") {
+        const email = document.getElementById("email").value;
 
-    if (tipo === "register" && response.status === 404) {
-        alert("Utilizador já existe. Por favor, insira um email diferente.");
-        window.location.href = "index.html";
-        return;
-    }
+        if (!email || email.trim() === "") {
+            alert("Por favor, insere o email.");
+            return;
+        }
 
-    const data = await response.json();
+        const response = await fetch("http://localhost:4000/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({
+                email,
+                tokenType: tipo
+            })
+        });
 
-    if (response.ok) {
-        alert(data.message);
+        if (tipo === "register" && response.status === 404) {
+            alert("Utilizador já existe. Por favor, insira um email diferente.");
+            window.location.href = "index.html";
+            return;
+        }
 
-        window.location.href =
-            "verificar_token.html?type=" + tipo +
-            "&email=" + encodeURIComponent(email);
+        const data = await response.json();
 
-    } else {
-        alert(data.error);
+        if (response.ok) {
+            alert(data.message);
+
+            window.location.href =
+                "verificar_token.html?type=" + tipo +
+                "&email=" + encodeURIComponent(email);
+
+        } else {
+            alert(data.error);
+        }
+    } else if (tipo === "vote" || tipo === "create") {
+        const response = await fetch("http://localhost:4000/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"},
+            credentials: "include",
+            body: JSON.stringify({
+                tokenType: tipo
+            })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(data.message);
+            window.location.href =
+                "verificar_token.html?type=" + tipo;
+        } else {
+            alert(data.error);
+        }      
+    } else {   
+        alert("Tipo de token desconhecido.");
     }
 }
 
@@ -278,11 +328,11 @@ function getQueryParams() {
 
 // VERIFICAR TOKEN
 async function verificar_token() {
-    const { email, tokenType } = getQueryParams();
+    const { tokenType } = getQueryParams();
     const token = document.getElementById("token").value;
 
-    if (!email || !tokenType) {
-        alert("Sessão inválida. Volta ao início.");
+    if (!tokenType) {
+        alert("Tipo de operação inválida. Por favor, tente novamente.");
         window.location.href = "index.html";
         return;
     }
@@ -298,7 +348,7 @@ async function verificar_token() {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            email,
+            email: getQueryParams().email,
             token,
             tokenType
         })
@@ -310,11 +360,11 @@ async function verificar_token() {
         alert(data.message);
 
         if (tokenType === "register") {
-            window.location.href = `criar_senha.html?email=${encodeURIComponent(email)}`;
+            window.location.href = `criar_senha.html?email=${encodeURIComponent(getQueryParams().email)}`;
         } else if (tokenType === "login") {
-            window.location.href = `verificar_senha.html?email=${encodeURIComponent(email)}`;
+            window.location.href = `verificar_senha.html?email=${encodeURIComponent(getQueryParams().email)}`;
         } else if (tokenType === "vote") {
-            window.location.href = "votar.html";
+            window.location.href = "id_votacao.html";
         } else if (tokenType === "create") {
             window.location.href = "criar_eleicao.html";
         }
@@ -398,13 +448,14 @@ async function verificarSenha() {
 
 
 async function id_votacao() {
-    const id= document.getElementById("id_votacao").value;
 
-    if (!id || id.trim()===""){
-        alert("Insira o id de votação");
+    const idInput = document.getElementById("id-votacao").value.trim();
+    if (!idInput) {
+        alert("Por favor, insira o ID da votação.");
         return;
     }
 
+<<<<<<< HEAD
     const response = await fetch (`http://localhost:4000/api/eleicoes/${id}/resultados`, {
         method: "GET",
         headers: {
@@ -421,10 +472,24 @@ async function id_votacao() {
         window.location.href = "votar.html";
     } else {
         alert(data.error);
+=======
+    try {
+        const resposta = await fetch(`http://localhost:4000/eleicoes/${idInput}`);
+        const data = await resposta.json();
+        if (!resposta.ok) {
+            alert(data.error);
+            return;
+        }
+        window.location.href = `votar.html?id=${idInput}`;
+    } catch (error) {
+        alert("Erro ao verificar o ID da votação. Tente novamente mais tarde.");
+>>>>>>> 0fbddca41395d8d48cc67cf0ef1330efdf1815e1
     }
 
+    
 }
 
+<<<<<<< HEAD
 
 function base64ParaArraybuffer(base64){
     const binaryString = atob(base64);
@@ -690,4 +755,42 @@ async function votar(){
     }
 }
 document.addEventListener("DOMContentLoaded",loadCandidatos);
+=======
+async function carregar_eleicao() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    if (!id) {
+        alert("ID da votação não fornecido.");
+        window.location.href = "id_votacao.html";
+        return;
+    }
+
+    const resposta = await fetch(`http://localhost:4000/eleicoes/${id}`);
+
+    if (!resposta.ok) {
+        alert("Erro ao carregar a eleição. Verifique o ID e tente novamente.");
+        window.location.href = "id_votacao.html";
+        return;
+    }
+
+    const eleicao = await resposta.json();
+
+
+    document.getElementById("titulo-eleicao").textContent = eleicao.nome;
+
+    const container = document.getElementById("candidatos"); // Container onde os candidatos serão exibidos
+
+    container.innerHTML = ""; // Limpa o container antes de adicionar os candidatos
+
+    eleicao.opcoes.forEach((opcao) => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+            <input type="radio" name="candidato" value="${opcao.nome}"> 
+            <label>${opcao.nome}</label>
+        `; //teve de ser opcao.nome porque o backend tem a opção como um objeto {nome: "Candidato A"}
+        container.appendChild(div);
+    }
+    );}
+>>>>>>> 0fbddca41395d8d48cc67cf0ef1330efdf1815e1
 
