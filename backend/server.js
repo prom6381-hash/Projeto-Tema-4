@@ -35,6 +35,9 @@ const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
 const sessoesVotar={}; // armazenar temporariamente as sessões de votação a ocorrerem
 
 
+function gerarCodigoEleicao() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 async function gerarchavesDH(){
     const response= await fetch("http://servidor-ca:5000/dh/gerar-chaves", {method: "POST"});
     return await response.json();
@@ -331,23 +334,6 @@ app.post("/api/votar", async(req,res)=>{
 })
 
 
-app.get("/eleicoes", async(req,res) => {
-
-    try {
-
-        const eleicoes = await Eleicao.find();
-
-        res.json(eleicoes);
-
-    } catch (erro) {
-
-        res.status(500).json({
-            error: "Erro ao buscar eleições"
-        });
-    }
-});
-
-
 // FAZER a parte que corre resultados de eleições
 app.get("/eleicoes/:id/resultados", async(req,res)=>{
 
@@ -499,8 +485,58 @@ app.post("/verificar_password", async(req,res)=>{
 
 
 
+app.post("/criar-eleicao", async(req,res)=>{
+
+    try{
+        if (!req.session || !req.session.user || !req.session.user.email){
+            return res.status(401).json({error:"O utilizador não está autenticado!"});
+        }
+        const { nome, candidatos, data_inicio, data_fim, } = req.body;
+        if (!nome || !candidatos || !data_inicio || !data_fim) {
+            return res.status(400).json({ error: "Dados incompletos ou não preenchidos!" });
+        }
+        let codigo;
+        let codigoExiste = true;    
+
+        while (codigoExiste) {
+            codigo = gerarCodigoEleicao();
+            const eleicaoExistente = await Eleicao.findOne({ codigo });
+            if (!eleicaoExistente) {
+                codigoExiste = false;
+            }
+        }
+
+        const novaEleicao = new Eleicao({
+            codigo,
+            nome,
+            id_criador: req.session.user.id,    
+            data_inicio,
+            data_fim,
+            opcoes: candidatos.map(candidato => ({ nome: candidato }))
+        });
+
+        await novaEleicao.save();
+        return res.json({ message: "Eleição criada com sucesso", codigo });
+    } catch (error) {
+        console.error("Erro ao criar a eleição:", error);
+        return res.status(500).json({ error: "Houve um erro interno ao criar a eleição!" });
+    }
+});
 
 
+app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obter os dados da eleição, e não criar ou modificar nada
+    const { codigo } = req.params;
+
+    const eleicao = await Eleicao.findOne({ codigo });
+
+    if (!eleicao) {
+        return res.status(404).json({
+            error: "Eleição não encontrada"
+        });
+    }
+
+    return res.json(eleicao);
+});
 
 
 //arrancar server

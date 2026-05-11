@@ -1,7 +1,5 @@
 ///index.html 
 
-const { emit } = require("npmlog");
-
 //criar_eleicao.html
 
 // - Botão Adicionar Candidatos
@@ -28,7 +26,7 @@ function remover_candidato() {
 }
 
 // - Botão Criar Eleição
-function criar_eleicao() {
+async function criar_eleicao() {
     const nomeEleicao = document.getElementById('nome-eleicao').value;
     if (nomeEleicao.trim() === "") {
         alert("Por favor, insira o nome da eleição.");
@@ -42,20 +40,20 @@ function criar_eleicao() {
         return;
     }
 
-    const dataInicio = document.getElementById('data-inicio').value;
-    if (dataInicio === "") {
+    const data_inicio = document.getElementById('data-inicio').value;
+    if (data_inicio === "") {
         alert("Por favor, insira a data de início.");
         return;
     }
 
-    const dataFim = document.getElementById('data-fim').value;
-    if (dataFim === "") {
+    const data_fim = document.getElementById('data-fim').value;
+    if (data_fim === "") {
         alert("Por favor, insira a data de fim.");
         return;
     }
 
-    const inicio = new Date(dataInicio);
-    const fim = new Date(dataFim);
+    const inicio = new Date(data_inicio);
+    const fim = new Date(data_fim);
 
     if (fim <= inicio) {
         alert("A data de fim não pode ser anterior/igual à data de início.");
@@ -78,10 +76,34 @@ function criar_eleicao() {
 
     console.log("Eleição Criada:", nomeEleicao);
     console.log("Candidatos:", candidatos);
-    console.log("Data de Início:", dataInicio);
-    console.log("Data de Fim:", dataFim);
+    console.log("Data de Início:", data_inicio);
+    console.log("Data de Fim:", data_fim);
 
-    alert(`Eleição '${nomeEleicao}' criada com ${candidatos.length} candidatos de ${dataInicio} a ${dataFim}!`);
+    try {
+        const resposta = await fetch("http://localhost:4000/criar-eleicao", {    
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify({
+                nome: nomeEleicao,
+                candidatos,
+                data_inicio,
+                data_fim
+            })
+        }) 
+        const data = await resposta.json();
+            if (resposta.ok) {
+                alert(`Eleição criada! Código: ${data.codigo}`);
+                console.log("CODIGO DA ELEIÇÃO:", data.codigo);
+                window.location.href = "votar_ou_criar.html";
+            }  else {
+                alert(data.error);
+            }
+} catch (error) {
+    alert("Erro ao criar a eleição. Tente novamente mais tarde.");
+}
 }
 
 async function pedirTokenLogin() {
@@ -132,16 +154,16 @@ async function ver_resultados() {
             titulo.textContent = eleicao.nome;
             cartao.appendChild(titulo);
             
-            const dataComeco = new Date(eleicao.dataInicio).toLocaleDateString('pt-PT');
-            const dataAcaba = new Date(eleicao.dataFim).toLocaleDateString('pt-PT');
+            const dataComeco = new Date(eleicao.data_inicio).toLocaleDateString('pt-PT');
+            const dataAcaba = new Date(eleicao.data_fim).toLocaleDateString('pt-PT');
             
             const data = document.createElement('p');
             data.textContent = `Eleição ocorre de ${dataComeco} até ${dataAcaba}`;
             cartao.appendChild(data);
             
             const atual = new Date();
-            const comeco = new Date(eleicao.dataInicio);
-            const acaba = new Date(eleicao.dataFim);
+            const comeco = new Date(eleicao.data_inicio);
+            const acaba = new Date(eleicao.data_fim);
             let estado;
             
             if (atual >= comeco && atual <= acaba) {
@@ -342,7 +364,7 @@ async function verificar_token() {
         } else if (tokenType === "login") {
             window.location.href = `verificar_senha.html?email=${encodeURIComponent(getQueryParams().email)}`;
         } else if (tokenType === "vote") {
-            window.location.href = "votar.html";
+            window.location.href = "id_votacao.html";
         } else if (tokenType === "create") {
             window.location.href = "criar_eleicao.html";
         }
@@ -421,4 +443,64 @@ async function verificarSenha() {
     }
 }
 
+
+async function id_votacao() {
+
+    const idInput = document.getElementById("id-votacao").value.trim();
+    if (!idInput) {
+        alert("Por favor, insira o ID da votação.");
+        return;
+    }
+
+    try {
+        const resposta = await fetch(`http://localhost:4000/eleicoes/${idInput}`);
+        const data = await resposta.json();
+        if (!resposta.ok) {
+            alert(data.error);
+            return;
+        }
+        window.location.href = `votar.html?id=${idInput}`;
+    } catch (error) {
+        alert("Erro ao verificar o ID da votação. Tente novamente mais tarde.");
+    }
+
+    
+}
+
+async function carregar_eleicao() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    if (!id) {
+        alert("ID da votação não fornecido.");
+        window.location.href = "id_votacao.html";
+        return;
+    }
+
+    const resposta = await fetch(`http://localhost:4000/eleicoes/${id}`);
+
+    if (!resposta.ok) {
+        alert("Erro ao carregar a eleição. Verifique o ID e tente novamente.");
+        window.location.href = "id_votacao.html";
+        return;
+    }
+
+    const eleicao = await resposta.json();
+
+
+    document.getElementById("titulo-eleicao").textContent = eleicao.nome;
+
+    const container = document.getElementById("candidatos"); // Container onde os candidatos serão exibidos
+
+    container.innerHTML = ""; // Limpa o container antes de adicionar os candidatos
+
+    eleicao.opcoes.forEach((opcao) => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+            <input type="radio" name="candidato" value="${opcao.nome}"> 
+            <label>${opcao.nome}</label>
+        `; //teve de ser opcao.nome porque o backend tem a opção como um objeto {nome: "Candidato A"}
+        container.appendChild(div);
+    }
+    );}
 
