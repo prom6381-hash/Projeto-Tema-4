@@ -1,5 +1,7 @@
 ///index.html 
 
+const { emit } = require("npmlog");
+
 //criar_eleicao.html
 
 // - Botão Adicionar Candidatos
@@ -245,6 +247,7 @@ async function pedirToken(tipo) {
             headers: {
                 "Content-Type": "application/json"
             },
+            credentials: "include",
             body: JSON.stringify({
                 email,
                 tokenType: tipo
@@ -303,11 +306,11 @@ function getQueryParams() {
 
 // VERIFICAR TOKEN
 async function verificar_token() {
-    const { email, tokenType } = getQueryParams();
+    const { tokenType } = getQueryParams();
     const token = document.getElementById("token").value;
 
-    if (!email || !tokenType) {
-        alert("Sessão inválida. Volta ao início.");
+    if (!tokenType) {
+        alert("Tipo de operação inválida. Por favor, tente novamente.");
         window.location.href = "index.html";
         return;
     }
@@ -323,7 +326,7 @@ async function verificar_token() {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            email,
+            email: getQueryParams().email,
             token,
             tokenType
         })
@@ -335,9 +338,9 @@ async function verificar_token() {
         alert(data.message);
 
         if (tokenType === "register") {
-            window.location.href = `criar_senha.html?email=${encodeURIComponent(email)}`;
+            window.location.href = `criar_senha.html?email=${encodeURIComponent(getQueryParams().email)}`;
         } else if (tokenType === "login") {
-            window.location.href = `verificar_senha.html?email=${encodeURIComponent(email)}`;
+            window.location.href = `verificar_senha.html?email=${encodeURIComponent(getQueryParams().email)}`;
         } else if (tokenType === "vote") {
             window.location.href = "votar.html";
         } else if (tokenType === "create") {

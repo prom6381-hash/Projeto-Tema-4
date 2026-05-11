@@ -77,12 +77,18 @@ app.post("/login", async (req, res) => {
         return res.status(400).json({ error: "Dados inválidos" });
     }
 
+    let email; // Declarar a variável email fora do bloco if para que possa ser usada posteriormente. Caso não fosse assim, daria erro de "email is not defined"
+
     if (tokenType == "vote" || tokenType == "create") {
         if (!req.session || !req.session.user || !req.session.user.email) {
             return res.status(401).json({ error: "O utilizador não está autenticado!" });
         }
+        else {
+            email = req.session.user.email;
+        }
+    } else {
+        email = req.body.email;
     }
-    const email = req.session.user.email;
 
     if (!tokenType) {
         return res.status(400).json({ error: "Dados inválidos" });
@@ -135,7 +141,20 @@ app.post("/login", async (req, res) => {
 // Verificar token
 
 app.post("/verify-token", async(req, res) => {  //async porque vamos usar await para operações assíncronas (acesso à base de dados)
-    const { email, token, tokenType } = req.body;
+    const {token, tokenType } = req.body;
+
+    let email; // Declarar a variável email fora do bloco if para que possa ser usada posteriormente. Caso não fosse assim, daria erro de "email is not defined"
+
+    if (tokenType == "vote" || tokenType == "create") {
+        if (!req.session || !req.session.user || !req.session.user.email) {
+            return res.status(401).json({ error: "O utilizador não está autenticado!" });
+        }
+        else {
+            email = req.session.user.email;
+        }
+    } else {
+        email = req.body.email; //login e registo, onde o email é fornecido no corpo da requisição
+    }
 
     if (!email || !token || !tokenType) {
         return res.status(400).json({ error: "Email e token são obrigatórios" });
@@ -468,10 +487,9 @@ app.post("/verificar_password", async(req,res)=>{
         return res.status(400).json({ error: "Certificado inválido" });
     }
 
-    return res.json({ message: "Autenticação bem-sucedida", subject: certData.subject });
 
     req.session.user = {
-    email: "user.email",
+    email: user.email,
     isVerified: true,
     id: user._id
     }
