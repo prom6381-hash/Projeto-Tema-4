@@ -395,4 +395,31 @@ async function verificarSenha() {
 
 
 async function id_votacao() {
+    const id= document.getElementById("id_votacao").value;
+
+    if (!id || id.trim()===""){
+        alert("Insira o id de votação");
+        return;
+    }
+
+    const response = await fetch (`http://localhost:4000/api/eleicoes/${id}/resultado`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({id_votacao: id})
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        localStorage.setItem("id_eleicao",id);
+        localStorage.setItem("nome_eleicao",data.nome);
+
+        window.location.href = "votar.html";
+    } else {
+        alert(data.error);
+    }
+
+}
     
