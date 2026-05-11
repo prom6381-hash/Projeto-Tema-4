@@ -1,12 +1,11 @@
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import dh
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
-parametros=dh.generate_parameters(generator=2,key_size=2048)
 
 def geraracao_chaves():
-    chave_privada=parametros.generate_private_key()
+    chave_privada=ec.generate_private_key(ec.SECP256R1())
     chave_publica=chave_privada.public_key()
     return chave_privada,chave_publica
 
@@ -20,7 +19,7 @@ def deserializar_publica(chave_bytes):
     return serialization.load_pem_public_key(chave_bytes)
 
 def calculo_chave_sessao(privada_local,publica_remota):
-    segredo_shared=privada_local.exchange(publica_remota)
+    segredo_shared=privada_local.exchange(ec.ECDH(),publica_remota)
 
     chave_sessao= HKDF(
         algorithm=hashes.SHA256(),

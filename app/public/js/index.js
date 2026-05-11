@@ -345,12 +345,14 @@ async function criarSenha() {
         return;
     }   
 
+    const chavepublicaRSA= await gerarChavesRSA();
+
     const response = await fetch("http://localhost:4000/create-password", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email:email, password:password, chavepublicaRSA: chavepublicaRSA })
     });
 
     const data = await response.json();
@@ -369,6 +371,7 @@ async function verificarSenha() {
 
     const params = new URLSearchParams(window.location.search);
     const email = params.get("email");
+    localStorage.setItem("email", email);
 
     if (!password) {
         alert("Por favor, insira a senha.");
@@ -402,12 +405,11 @@ async function id_votacao() {
         return;
     }
 
-    const response = await fetch (`http://localhost:4000/api/eleicoes/${id}/resultado`, {
+    const response = await fetch (`http://localhost:4000/api/eleicoes/${id}/resultados`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({id_votacao: id})
     });
 
     const data = await response.json();
@@ -422,4 +424,270 @@ async function id_votacao() {
     }
 
 }
+
+
+function base64ParaArraybuffer(base64){
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+function arrayBufferParaBase64(buffer){
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
     
+
+async function gerarChavesRSA(){
+    const chaves= await crypto.subtle.generateKey({
+        name:"RSA-PSS",
+        modulusLength: 2048,
+        publicExponent: new Uint8Array([1,0,1]),
+        hash: "SHA-256",
+        },
+        true,
+        ['sign','verify']
+    );
+
+    const chavepubExportada= await crypto.subtle.exportKey(
+        "spki",
+        chaves.publicKey
+    );
+    const chavepubBase64= arrayBufferParaBase64(chavepubExportada);
+
+    const chaveprivadaExportada= await crypto.subtle.exportKey(
+        "pkcs8",
+        chaves.privateKey
+    );
+    const chaveprivadaBase64= arrayBufferParaBase64(chaveprivadaExportada);
+    localStorage.setItem("chave_Privada_RSA", chaveprivadaBase64);
+
+    return chavepubBase64;
+
+}
+
+async function assinaturaRSA(dados,chavePrivadaRSA){
+    const dadosBytes= new TextEncoder().encode(dados);
+    const assinatura= await crypto.subtle.sign(
+        {name: "RSA-PSS",
+            saltLength: 32,
+        },
+        chavePrivadaRSA,
+        dadosBytes
+    );
+    return arrayBufferParaBase64(assinatura);
+}
+
+async function gerarchavesDH(){
+    const chaves= await crypto.subtle.generateKey({
+        name: "ECDH",
+        namedCurve:"P-256"
+        },
+        true,
+        ['deriveBits']
+    );
+    const chavepubExportada= await crypto.subtle.exportKey("spki", chaves.publicKey);
+    const chavepubBase64=arrayBufferParaBase64(chavepubExportada);
+    return {chavePrivada: chaves.privateKey, chavePublica: chavepubBase64};
+}
+
+async function calcularchaveSessao(chaveprivadaECDH,chavepubServerBase64){
+    const chavepubServer= await crypto.subtle.importKey(
+        "spki",
+        base64ParaArraybuffer(chavepubServerBase64),
+        {name: "ECDH",
+            namedCurve:"P-256"
+        },
+        false,
+        []
+    
+    );
+
+    const segredoPartilhado= await crypto.subtle.deriveBits({
+        name: "ECDH",
+        public: chavepubServer
+        },
+        chaveprivadaECDH,
+        256
+    );
+
+    const chaveHKDF= await crypto.subtle.importKey(
+        "raw",
+        segredoPartilhado,
+        {name:"HKDF"},
+        false,
+        ["deriveKey"]
+    );
+
+    const ultimachave= await crypto.subtle.deriveKey(
+        {name:"HKDF",
+            hash: "SHA-256",
+            salt: new Uint8Array(0),
+            info: new TextEncoder().encode("sistema-de-votacao-eletronica")
+        },
+        chaveHKDF,
+        {name:"AES-GCM",
+            length:256
+        },
+        false,
+        ["encrypt"]
+    );
+
+    return ultimachave;
+
+}
+
+async function encriptarVoto(chaveSessao,voto,AAD){
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+
+    const votoCifrado= await crypto.subtle.encrypt(
+        {name:"AES-GCM",
+            iv:iv,
+            additionalData: new TextEncoder().encode(AAD)
+        },
+        chaveSessao,
+        new TextEncoder().encode(voto)
+    );
+    
+    return {iv: arrayBufferParaBase64(iv),
+        votoCifrado: arrayBufferParaBase64(votoCifrado.slice(0,-16)),
+    tag: arrayBufferParaBase64(votoCifrado.slice(-16))
+    };
+
+}
+
+async function loadCandidatos(){
+    const idEleicao= localStorage.getItem("id_eleicao");
+    const nomeEleicao= localStorage.getItem("nome_eleicao");
+
+    if (!idEleicao){
+        alert("Nenhuma eleição foi selecionada!");
+        window.location.href="id_votacao.html";
+        return;
+    }
+    try{ const response= await fetch(`http://localhost:4000/eleicoes/${idEleicao}/opcoes`);
+        const dados= await response.json();
+        
+    document.getElementById("nome-eleicao").textContent=dados.nome;
+
+    const lista= document.getElementById("lista-candidatos");
+    lista.innerHTML='';
+    
+    dados.opcoes.forEach(opcao=>{
+        const div = document.createElement("div");
+        div.stle.margin="10px 0";
+        div.innerHTML=`
+                <input type="radio" name="candidato" value="${opcao._id}" id="opcao_${opcao._id}">
+                <label for="opcao_${opcao._id}">${opcao.nome}</label>
+            `;
+        lista.appendChild(div)
+    });
+    document.getElementById("btn-enviar").addEventListener("click", votar);}
+    catch (erro){
+        console.error("Erro ao tentar carregar os candidatos, o erro foi:", erro);
+        alert("Houve um erro ao tentar carregar a eleição atual!!");
+    }
+
+}
+
+async function votar(){
+    const  candidatoSelect=document.querySelector('input[name="candidato"]:checked');
+
+    if (!candidatoSelect){
+        alert("Escolha um candidatos, por favor!!");
+        return;
+    }
+
+    const idOpcao=candidatoSelect.value;
+    const idEleicao=localStorage.getItem("id_eleicao");
+    const nomeEleicao=localStorage.getItem("nome_eleicao");
+    const email=localStorage.getItem("email");
+
+    const nomeCandidato=document.querySelector(`label[for="opcao_${idOpcao}"]`).textContent;
+
+    document.getElementById("voto-selecionado").textContent=nomeCandidato;
+
+    try{
+        const chavesECDH= await gerarChavesDH();
+
+        const chaveprivadaRSABase64=localStorage.getItem("chave_Privada_RSA");
+        if (!chaveprivadaRSABase64){
+            alert("A chave RSA não foi encontrado, recomeçe o registo!!");
+            return;
+        }
+
+        const chaveprivadaRSA= await crypto.subtle.importKey(
+            "pkcs8",
+            base64ParaArraybuffer(chaveprivadaRSABase64),
+            {name:"RSA-PSS",
+                hash:"SHA-256"
+            },
+            false,
+            ["sign"]
+        );
+
+        const assinatura=await assinaturaRSA(chavesECDH.chavePublica,chaveprivadaRSA);
+        const respostaInicio=await fetch("http://localhost:4000/api/iniciar-votacao", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: email,
+                chavepub_remota: chavesECDH.chavePublica,
+                assinatura: assinatura
+            })
+        });
+
+        const dadosInicio= await respostaInicio.json();
+        if (!respostaInicio.ok){
+            alert(dadosInicio.error);
+            return;
+        }
+
+        const chaveSessao= await calcularchaveSessao(
+            chavesECDH.chavePrivada,
+            dadosInicio.chave_publica_dh
+        )
+
+        const votoEncriptado= await encriptarVoto(
+            chaveSessao,
+            idOpcao,
+            idEleicao
+        )
+
+        const respostaVoto= await fetch("http://localhost:4000/api/votar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id_sessao: dadosInicio.id_sessao,
+                votoCifrado: votoEncriptado.votoCifrado,
+                iv: votoEncriptado.iv,
+                tag: votoEncriptado.tag,
+                AAD: idEleicao,
+                idEleicao: idEleicao
+            })
+        });
+
+        const dadosVoto=await respostaVoto.json();
+        if(respostaVoto.ok){
+            alert(dadosVoto.message);
+            localStorage.removeItem("id_eleicao");
+            localStorage.removeItem("nome_eleicao");
+            window.location.href="votar_ou_criar.html";
+        }
+        else{
+            alert(dadosVoto.error);
+        }
+    } catch(erro){
+        console.error("Erro ao votar:", erro);
+        alert("Houve um erro ao tentar processar o voto!!")
+    }
+}
+document.addEventListener("DOMContentLoaded",loadCandidatos);
+

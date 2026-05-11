@@ -11,6 +11,7 @@ const Token = require("./models/Token");
 const User = require("./models/User");
 const Voto = require("./models/Voto");
 const Eleicao= require("./models/election");
+const EleicaoEleitor = require("./models/eleicaoEleitor");
 const app = express();
 
 app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
@@ -263,6 +264,23 @@ app.post("/api/votar", async(req,res)=>{
         }
 
         const sessao=sessoesVotar[id_sessao];
+        const email=sessao.email;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ error: "Utilizador não encontrado!" });
+        }
+
+        const jaVotou = await EleicaoEleitor.findOne({
+            id_eleicao: idEleicao,
+            id_utilizador: user._id
+        });
+
+        if (jaVotou && jaVotou.votou) {
+            delete sessoesVotar[id_sessao];
+            return res.status(400).json({ error: "Já votou nesta eleição!" });
+        }
+
         const desencriptado= await desencriptarVoto(
             sessao.chaveSessao,
             AAD || idEleicao,
@@ -271,12 +289,19 @@ app.post("/api/votar", async(req,res)=>{
             tag
         );
 
+        const idOpcao= desencriptado.voto;
+
         const guardarVoto= new Voto({
-            eleicaoId: idEleicao,
-            candidato: desencriptado.voto,
-            eleitor: sessao.email
+            id_eleicao: idEleicao,
+            id_opcao: idOpcao
         });
         await guardarVoto.save();
+
+        await EleicaoEleitor.findOneAndUpdate(
+            { id_eleicao: idEleicao, id_utilizador: user._id },
+            { votou: true },
+            { upsert: true, new: true }
+        );
 
         delete sessoesVotar[id_sessao];
         return res.json({ message: "O voto foi corretamente registado!"});
@@ -316,22 +341,24 @@ app.get("/eleicoes/:id/resultados", async(req,res)=>{
             return res.status(404).json({error:'Não encontrámos a eleição'});
         }
         
-        const votos1=await Voto.find({eleicaoId: id});
+        const votos1=await Voto.find({id_eleicao: id});
 
         const votosTotal= {};
         votos1.forEach(total =>{
-            if (votosTotal[total.candidato]){
-                ++votosTotal[total.candidato];
+            const idOpcaoStr=total.id_opcao.toString();
+            if (votosTotal[idOpcaoStr]){
+                ++votosTotal[idOpcaoStr];
             } else{
-                votosTotal[total.candidato]=1;
+                votosTotal[idOpcaoStr]=1;
             }
         });
 
         const votosTodos= votos1.length;
-        const resultados= eleicao.opcoes.map(opcoes=>{
-            const votoCandidato=votosTotal[opcoes.nome] || 0; //se não houver votos para a opção, considera 0. Faz-se desta forma para ser string, pois seria objeto se fosse votosTotal[opcoes.nome] sem o || 0, e depois não dava para fazer os cálculos.
+        const resultados= eleicao.opcoes.map(opcao=>{
+            const votoCandidato=votosTotal[opcao._id.toString()] || 0; //se não houver votos para a opção, considera 0. Faz-se desta forma para ser string, pois seria objeto se fosse votosTotal[opcoes.nome] sem o || 0, e depois não dava para fazer os cálculos.
             return{
-                nome: opcoes.nome,
+                nome: opcao.nome,
+                _id: opcao._id,
                 votos: votoCandidato,
                 percentagem: votosTodos>0
                     ? Number(votoCandidato / votosTodos * 100).toFixed(1) 
@@ -385,7 +412,7 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
 
     const certData = await certResponse.json();
 
-
+    user.chavePublicaRSA=req.body.chavePublicaRSA;
     user.certificate = certData.certificate; //guarda o certificado do utilizador na base de dados
     user.passwordHash = data.hash;
     user.salt = data.salt;
@@ -448,7 +475,23 @@ app.post("/verificar_password", async(req,res)=>{
 });
 
 
+app.get("/eleicoes/:id/opcoes", async (req, res) => {
+    try {
+        const eleicao = await Eleicao.findById(req.params.id);
 
+        if (!eleicao) {
+            return res.status(404).json({ error: "Eleição não encontrada" });
+        }
+
+        res.json({
+            nome: eleicao.nome,
+            opcoes: eleicao.opcoes
+        });
+
+    } catch (erro) {
+        res.status(500).json({ error: "Erro ao buscar opções" });
+    }
+});
 
 
 
