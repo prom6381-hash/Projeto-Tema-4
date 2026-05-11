@@ -250,6 +250,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 app.post("/api/iniciar-votacao", async (req,res)=>{
     try{
         const {chavepub_remota,assinatura}= req.body;
+        const email= req.session.user.email;
         if (!email || !chavepub_remota || !assinatura){
             return res.status(400).json({error:"Dados incompletos ou não preenchidos!"});
         }
@@ -515,7 +516,7 @@ app.get("/eleicoes/:id/opcoes", async (req, res) => {
     try {
         const eleicao = await Eleicao.findById(req.params.id);
 
-<<<<<<< HEAD
+
         if (!eleicao) {
             return res.status(404).json({ error: "Eleição não encontrada" });
         }
@@ -527,7 +528,9 @@ app.get("/eleicoes/:id/opcoes", async (req, res) => {
 
     } catch (erro) {
         res.status(500).json({ error: "Erro ao buscar opções" });
-=======
+   }
+});
+
 app.post("/criar-eleicao", async(req,res)=>{
 
     try{
@@ -563,7 +566,7 @@ app.post("/criar-eleicao", async(req,res)=>{
     } catch (error) {
         console.error("Erro ao criar a eleição:", error);
         return res.status(500).json({ error: "Houve um erro interno ao criar a eleição!" });
->>>>>>> 0fbddca41395d8d48cc67cf0ef1330efdf1815e1
+
     }
 });
 
@@ -582,6 +585,20 @@ app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obte
     return res.json(eleicao);
 });
 
+app.get("/eleicoes", async (req, res) => {
+    try {
+        const eleicoes = await Eleicao.find();
+        res.json(eleicoes);
+    } catch (erro) {
+        res.status(500).json({ error: "Erro ao buscar eleições" });
+    }
+});
+
+pp.get("/eleicoes/codigo/:codigo", async (req, res) => {
+    const eleicao = await Eleicao.findOne({ codigo: req.params.codigo });
+    if (!eleicao) return res.status(404).json({ error: "Eleição não encontrada" });
+    res.json(eleicao);
+});
 
 //arrancar server
 

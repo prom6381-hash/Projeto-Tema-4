@@ -433,6 +433,7 @@ async function verificarSenha() {
         headers: {
             "Content-Type": "application/json"
         },
+        credentials:"include",
         body: JSON.stringify({ email, password })
     });
 
@@ -455,8 +456,8 @@ async function id_votacao() {
         return;
     }
 
-<<<<<<< HEAD
-    const response = await fetch (`http://localhost:4000/api/eleicoes/${id}/resultados`, {
+
+    const response = await fetch (`http://localhost:4000/api/eleicoes/${idInput}/resultados`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
@@ -466,30 +467,16 @@ async function id_votacao() {
     const data = await response.json();
 
     if (response.ok) {
-        localStorage.setItem("id_eleicao",id);
+        localStorage.setItem("id_eleicao",idInput);
         localStorage.setItem("nome_eleicao",data.nome);
 
-        window.location.href = "votar.html";
-    } else {
-        alert(data.error);
-=======
-    try {
-        const resposta = await fetch(`http://localhost:4000/eleicoes/${idInput}`);
-        const data = await resposta.json();
-        if (!resposta.ok) {
-            alert(data.error);
-            return;
-        }
         window.location.href = `votar.html?id=${idInput}`;
-    } catch (error) {
-        alert("Erro ao verificar o ID da votação. Tente novamente mais tarde.");
->>>>>>> 0fbddca41395d8d48cc67cf0ef1330efdf1815e1
+    } else {
+        alert(data.error || data.erro3 || "Não encontrámos a eleição");
     }
-
-    
 }
 
-<<<<<<< HEAD
+
 
 function base64ParaArraybuffer(base64){
     const binaryString = atob(base64);
@@ -647,7 +634,7 @@ async function loadCandidatos(){
     
     dados.opcoes.forEach(opcao=>{
         const div = document.createElement("div");
-        div.stle.margin="10px 0";
+        div.style.margin="10px 0";
         div.innerHTML=`
                 <input type="radio" name="candidato" value="${opcao._id}" id="opcao_${opcao._id}">
                 <label for="opcao_${opcao._id}">${opcao.nome}</label>
@@ -680,7 +667,7 @@ async function votar(){
     document.getElementById("voto-selecionado").textContent=nomeCandidato;
 
     try{
-        const chavesECDH= await gerarChavesDH();
+        const chavesECDH= await gerarchavesDH();
 
         const chaveprivadaRSABase64=localStorage.getItem("chave_Privada_RSA");
         if (!chaveprivadaRSABase64){
@@ -755,7 +742,7 @@ async function votar(){
     }
 }
 document.addEventListener("DOMContentLoaded",loadCandidatos);
-=======
+
 async function carregar_eleicao() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
@@ -766,7 +753,7 @@ async function carregar_eleicao() {
         return;
     }
 
-    const resposta = await fetch(`http://localhost:4000/eleicoes/${id}`);
+    const resposta = await fetch(`http://localhost:4000/eleicoes/${idInput}`);
 
     if (!resposta.ok) {
         alert("Erro ao carregar a eleição. Verifique o ID e tente novamente.");
@@ -792,5 +779,5 @@ async function carregar_eleicao() {
         container.appendChild(div);
     }
     );}
->>>>>>> 0fbddca41395d8d48cc67cf0ef1330efdf1815e1
+
 
