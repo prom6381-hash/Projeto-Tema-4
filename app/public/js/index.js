@@ -101,7 +101,7 @@ async function pedirTokenCriar() {
 // ver resultados lista
 async function ver_resultados() {
     try {
-        const resposta = await fetch('http://localhost:4000/api/eleicoes');
+        const resposta = await fetch('http://localhost:4000/eleicoes');
         
         if (!resposta.ok) {
             alert("Erro ao carregar eleições.");
@@ -172,67 +172,10 @@ async function ver_resultados() {
     }
 }
 
-// resultados de uma eleição
-async function resultados_eleicoes(id){
-    try{
-        const endereco=await fetch(`http://localhost:4000/api/eleicoes/${id}/resultados`);
-        if (!endereco.ok){
-            alert("Erro ao obter o resultado da eleição!");
-            return;
-        }
-
-        const info1= await endereco.json();
-        const dados= document.getElementById("resultados").value;
-        dados.innerHTML='';
-        
-        const titulo1= document.createElement("h2");
-        titulo1.textContent=info1.nome;
-        dados.appendChild(titulo1);
-
-        const numero_votos=document.createElement("p");
-        numero_votos.TextContext=`Votos totais:${info1.totalVotos}`;
-        dados.appendChild(numero_votos);
-
-        info1.resultados.forEach(candidatos1=>{
-            const novo= document.createElement("p");
-            novo.textContent=`${candidatos1.nome}:Tem ${candidatos1.votos} votos(${candidatos1.percentagem}%)`;
-            dados.appendChild(novo);
-
-            const barra = document.createElement('div');
-            barra.style.background = '#e0e0e0';
-            barra.style.height = '24px';
-            barra.style.borderRadius = '4px';
-            barra.style.marginBottom = '15px';
-
-            const barracheia = document.createElement('div');
-            barracheia.style.background = '#3498db';
-            barracheia.style.height = '100%';
-            barracheia.style.width = `${candidato.percentagem}%`;
-            barracheia.style.borderRadius = '4px';
-            barracheia.textContent = `${candidato.percentagem}%`;
-            barracheia.style.color = 'white';
-            barracheia.style.fontSize = '12px';
-
-            barra.appendChild(barracheia);
-            dados.appendChild(barra);
-
-            const butao1=document.createElement("button");
-            butao1.TextContext='Ver outras eleições';
-            butao1.onclick = ver_eleicoes();
-            dados.appendChild(butao1);
-        });
-
-    } catch(erro1){
-        console.error("Ocorreu o erro:",erro1);
-        alert("Houve um erro, tente novamente!");
-        return;
-    }
-} 
-
-// ver uma eleição
+// ver resultados de uma eleição
 async function ver_uma_eleicao(id) {
     try {
-        const resposta = await fetch(`http://localhost:4000/api/eleicoes/${id}/resultados`);
+        const resposta = await fetch(`http://localhost:4000/eleicoes/${id}/resultados`);
         
         if (!resposta.ok) {
             alert("Erro ao carregar resultados.");
@@ -449,3 +392,7 @@ async function verificarSenha() {
         alert(data.error);
     }
 }
+
+
+async function id_votacao() {
+    

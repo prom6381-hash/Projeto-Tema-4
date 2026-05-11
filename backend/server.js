@@ -287,8 +287,26 @@ app.post("/api/votar", async(req,res)=>{
     }
 })
 
+
+app.get("/eleicoes", async(req,res) => {
+
+    try {
+
+        const eleicoes = await Eleicao.find();
+
+        res.json(eleicoes);
+
+    } catch (erro) {
+
+        res.status(500).json({
+            error: "Erro ao buscar eleições"
+        });
+    }
+});
+
+
 // FAZER a parte que corre resultados de eleições
-app.get("/api/eleicoes/:id/resultado", async(req,res)=>{
+app.get("/eleicoes/:id/resultados", async(req,res)=>{
 
     try{
         const id= req.params.id;
@@ -310,20 +328,20 @@ app.get("/api/eleicoes/:id/resultado", async(req,res)=>{
         });
 
         const votosTodos= votos1.length;
-        const resultados= eleicao.candidatos.map(candidatos2=>{
-            const votoCandidato=votosTotal[candidatos2];
+        const resultados= eleicao.opcoes.map(opcoes=>{
+            const votoCandidato=votosTotal[opcoes.nome] || 0; //se não houver votos para a opção, considera 0. Faz-se desta forma para ser string, pois seria objeto se fosse votosTotal[opcoes.nome] sem o || 0, e depois não dava para fazer os cálculos.
             return{
-                nome: candidatos2,
+                nome: opcoes.nome,
                 votos: votoCandidato,
                 percentagem: votosTodos>0
-                    ? Number(votosCandidato / votosTodos * 100).toFixed(1) 
+                    ? Number(votoCandidato / votosTodos * 100).toFixed(1) 
                     : 0
             };
         });
         res.json({
             nome: eleicao.nome,
-            dataInicio: eleicao.dataInicio,
-            dataFim: eleicao.dataFim,
+            dataInicio: eleicao.data_inicio,
+            dataFim: eleicao.data_fim,
             totalVotos: votosTodos, 
             resultados: resultados
         });
