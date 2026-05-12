@@ -741,8 +741,8 @@ async function votar(){
         console.error("Erro ao votar:", erro);
         alert("Houve um erro ao tentar processar o voto!!")
     }
+    document.addEventListener("DOMContentLoaded", carregar_eleicao);
 }
-document.addEventListener("DOMContentLoaded",loadCandidatos);
 
 async function carregar_eleicao() {
     const params = new URLSearchParams(window.location.search);
