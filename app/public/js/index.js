@@ -649,6 +649,7 @@ async function encriptarVoto(chaveSessao,voto,AAD){
 //
 //}//
 
+
 async function votar(){
     const  candidatoSelect=document.querySelector('input[name="candidato"]:checked');
 
