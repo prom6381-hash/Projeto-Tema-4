@@ -440,6 +440,18 @@ async function verificarSenha() {
     const data = await response.json();
 
     if (response.ok) {
+        if(!localStorage.getItem("chave_Privada_RSA")){
+            const chavePublicaRSA=await gerarChavesRSA();
+            await fetch("http://localhost:4000/guardar-chave-rsa",{
+                method:"POST",
+                headers: {"Content-Type": "application/json"},
+                credentials:"include",
+                body:JSON.stringify({
+                    email:email,
+                    chavePublicaRSA: chavePublicaRSA
+                })
+            });
+        }
         alert(data.message);
         window.location.href = "votar_ou_criar.html";
     } else {

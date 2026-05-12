@@ -600,6 +600,29 @@ app.get("/eleicoes/codigo/:codigo", async (req, res) => {
     res.json(eleicao);
 });
 
+app.post("/guardar-chave-rsa",async (req,res)=>{
+    try{
+        const {email,chavePublicaRSA}=req.body;
+
+        if (!email || !chavePublicaRSA){
+            return res.status(400).json({error: "Dados incompletos!!"});
+        }
+
+        const user= await User.findOne({email});
+        if (!user){
+            return res.status(404).json({error:"User not found!!"});
+        }
+
+        user.chavePublicaRSA=chavePublicaRSA;
+        await user.save();
+
+        return res.json({message:"A chave RSA foi guardada!!"});
+    } catch(erro){
+        console.error("Houve um erro ao guardar a chave RSA:", erro);
+        return res.status(500).json({error:"Houve um erro interno"});
+    }
+});
+
 //arrancar server
 
 const PORT = process.env.PORT || 4000;
