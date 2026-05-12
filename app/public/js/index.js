@@ -615,39 +615,39 @@ async function encriptarVoto(chaveSessao,voto,AAD){
 
 }
 
-async function loadCandidatos(){
-    const idEleicao= localStorage.getItem("id_eleicao");
-    const nomeEleicao= localStorage.getItem("nome_eleicao");
+//async function loadCandidatos(){
+    //const idEleicao= localStorage.getItem("id_eleicao");
+    //const nomeEleicao= localStorage.getItem("nome_eleicao");
 
-    if (!idEleicao){
-        alert("Nenhuma eleição foi selecionada!");
-        window.location.href="id_votacao.html";
-        return;
-    }
-    try{ const response= await fetch(`http://localhost:4000/eleicoes/${idEleicao}/opcoes`);
-        const dados= await response.json();
-        
-    document.getElementById("nome-eleicao").textContent=dados.nome;
+    //if (!idEleicao){
+      //  alert("Nenhuma eleição foi selecionada!");
+      //  window.location.href="id_votacao.html";
+       // return;
+    //}
+    //try{ const response= await fetch(`http://localhost:4000/eleicoes/${idEleicao}/opcoes`);
+    //    const dados= await response.json();
+    //    
+   // document.getElementById("nome-eleicao").textContent=dados.nome;
 
-    const lista= document.getElementById("lista-candidatos");
-    lista.innerHTML='';
+    //const lista= document.getElementById("lista-candidatos");
+    //lista.innerHTML='';
     
-    dados.opcoes.forEach(opcao=>{
-        const div = document.createElement("div");
-        div.style.margin="10px 0";
-        div.innerHTML=`
-                <input type="radio" name="candidato" value="${opcao._id}" id="opcao_${opcao._id}">
-                <label for="opcao_${opcao._id}">${opcao.nome}</label>
-            `;
-        lista.appendChild(div)
-    });
-    document.getElementById("btn-enviar").addEventListener("click", votar);}
-    catch (erro){
-        console.error("Erro ao tentar carregar os candidatos, o erro foi:", erro);
-        alert("Houve um erro ao tentar carregar a eleição atual!!");
-    }
-
-}
+    //dados.opcoes.forEach(opcao=>{
+    //    const div = document.createElement("div");
+    //    div.style.margin="10px 0";
+    //    div.innerHTML=`
+                //<input type="radio" name="candidato" value="${opcao._id}" id="opcao_${opcao._id}">
+                //<label for="opcao_${opcao._id}">${opcao.nome}</label>
+          //  `;
+      // lista.appendChild(div)
+  //  });
+   // document.getElementById("btn-enviar").addEventListener("click", votar);}
+   // catch (erro){
+   //     console.error("Erro ao tentar carregar os candidatos, o erro foi:", erro);
+   //     alert("Houve um erro ao tentar carregar a eleição atual!!");
+   // }
+//
+//}//
 
 async function votar(){
     const  candidatoSelect=document.querySelector('input[name="candidato"]:checked');
