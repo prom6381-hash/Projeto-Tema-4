@@ -746,9 +746,9 @@ async function votar(){
 
 async function carregar_eleicao() {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+    const idInput = params.get("idInput");
 
-    if (!id) {
+    if (!idInput) {
         alert("ID da votação não fornecido.");
         window.location.href = "id_votacao.html";
         return;
