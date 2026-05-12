@@ -249,18 +249,27 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 
 app.post("/api/iniciar-votacao", async (req,res)=>{
     try{
+
+        console.log("SESSÃO:", req.session);           // para ver o que está a dar erro vvvv
+        console.log("USER:", req.session.user);        // ""
+        console.log("BODY:", req.body);                 //""
+
         const {chavepub_remota,assinatura}= req.body;
+        if (!req.session || !req.session.user || !req.session.user.email){
+            console.log("A sessão é inválida");
+            return res.status(401).json({error:"Utilizador não autenticado!!"});
+        }
+
         const email= req.session.user.email;
-        if (!email || !chavepub_remota || !assinatura){
+        if (!chavepub_remota || !assinatura){
+            console.log("FALHOU: dados incompletos");  //  aqui tmb
+            console.log("email:", email);
+            console.log("chavepub:", chavepub_remota ? "existe" : "FALTA");
+            console.log("assinatura:", assinatura ? "existe" : "FALTA");
             return res.status(400).json({error:"Dados incompletos ou não preenchidos!"});
         }
 
-
-        if (!req.session || !req.session.user || !req.session.user.email){
-            return res.status(401).json({error:"O utilizador não está autenticado!"});
-        }
-
-        const user=await User.findOne({ _id: req.session.user.id });
+        const user=await User.findOne({ email:email}); //mudei de pesquisar o id para email para testar
         if (!user){
             return res.status(404).json({error:"Utilizador não foi encontrado!"});
         }
@@ -505,12 +514,24 @@ app.post("/verificar_password", async(req,res)=>{
     req.session.user = {
     email: user.email,
     isVerified: true,
-    id: user._id
+    id: user._id.toString() //adicono o toString para testar para ver se corre bem
     }
 
     return res.json({ message: "Autenticação bem-sucedida", subject: certData.subject });
 });
 
+// por agora adicionei isto para ver se a sessao está ativa/guardada
+app.get("/api/sessao-teste", (req, res) => {
+    if (req.session.user) {
+        res.json({
+            sessao_ativa: true,
+            email: req.session.user.email,
+            id: req.session.user.id
+        });
+    } else {
+        res.json({ sessao_ativa: false });
+    }
+});
 
 app.get("/eleicoes/:id/opcoes", async (req, res) => {
     try {

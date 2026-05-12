@@ -7,7 +7,7 @@ from cryptography.exceptions import InvalidSignature
 
 def gerar_chaves_rsa():
     privatekey= rsa.generate_private_key(public_exponent=65537,key_size=2048)
-    publickey= privatekey().public_key()
+    publickey= privatekey.public_key()
 
     return privatekey, publickey
 

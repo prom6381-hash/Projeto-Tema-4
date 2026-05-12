@@ -347,6 +347,7 @@ async function verificar_token() {
         headers: {
             "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify({
             email: getQueryParams().email,
             token,
@@ -402,7 +403,7 @@ async function criarSenha() {
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email:email, password:password, chavepublicaRSA: chavepublicaRSA })
+        body: JSON.stringify({ email:email, password:password, chavePublicaRSA: chavepublicaRSA })
     });
 
     const data = await response.json();
@@ -701,7 +702,7 @@ async function votar(){
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                email: email,
+                //email: email,    faço isto para testar
                 chavepub_remota: chavesECDH.chavePublica,
                 assinatura: assinatura
             })
@@ -791,3 +792,31 @@ async function carregar_eleicao() {
 if (window.location.pathname.includes("votar.html")) {
     document.addEventListener("DOMContentLoaded", carregar_eleicao);
 }
+
+
+//isto é para teste apenas 
+//async function enviarChaveRSA() {
+  //  const chavePublicaRSA = localStorage.getItem("chave_Privada_RSA");
+    
+    //if (!chavePublicaRSA) {
+      //  const novaChave = await gerarChavesRSA();
+        //alert("Chave RSA gerada. Tenta votar novamente.");
+//        return;
+  //  }
+    
+    //const email = localStorage.getItem("email");
+    
+//    const response = await fetch("http://localhost:4000/guardar-chave-rsa", {
+//        method: "POST",
+   //      headers: { "Content-Type": "application/json" },
+  //       credentials: "include",
+  //       body: JSON.stringify({ 
+   //          email: email, 
+    //         chavePublicaRSA: chavePublicaRSA 
+   //      })
+   //  });
+    
+   //  const data = await response.json();
+  //   console.log(data);
+   //  alert(data.message || data.error);
+// }
