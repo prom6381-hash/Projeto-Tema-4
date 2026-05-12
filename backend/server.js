@@ -594,7 +594,7 @@ app.get("/eleicoes", async (req, res) => {
     }
 });
 
-pp.get("/eleicoes/codigo/:codigo", async (req, res) => {
+app.get("/eleicoes/codigo/:codigo", async (req, res) => {
     const eleicao = await Eleicao.findOne({ codigo: req.params.codigo });
     if (!eleicao) return res.status(404).json({ error: "Eleição não encontrada" });
     res.json(eleicao);

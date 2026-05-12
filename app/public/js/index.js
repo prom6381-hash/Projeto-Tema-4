@@ -457,7 +457,7 @@ async function id_votacao() {
     }
 
 
-    const response = await fetch (`http://localhost:4000/api/eleicoes/${idInput}/resultados`, {
+    const response = await fetch (`http://localhost:4000/eleicoes/${idInput}`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
