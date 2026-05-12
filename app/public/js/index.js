@@ -658,14 +658,12 @@ async function votar(){
         return;
     }
 
-    const idOpcao=candidatoSelect.value;
+    const idOpcao = candidatoSelect.value;
     const idEleicao=localStorage.getItem("id_eleicao");
     const nomeEleicao=localStorage.getItem("nome_eleicao");
     const email=localStorage.getItem("email");
-
-    const nomeCandidato=document.querySelector(`label[for="opcao_${idOpcao}"]`).textContent;
-
-    document.getElementById("voto-selecionado").textContent=nomeCandidato;
+    
+    document.getElementById("voto-selecionado").textContent=idOpcao;
 
     try{
         const chavesECDH= await gerarchavesDH();
@@ -741,16 +739,14 @@ async function votar(){
         console.error("Erro ao votar:", erro);
         alert("Houve um erro ao tentar processar o voto!!")
     }
-    document.addEventListener("DOMContentLoaded", carregar_eleicao);
 }
 
 async function carregar_eleicao() {
     const params = new URLSearchParams(window.location.search);
-    const idInput = params.get("idInput");
+    const idInput = params.get("id");
 
     if (!idInput) {
         alert("ID da votação não fornecido.");
-        window.location.href = "id_votacao.html";
         return;
     }
 
@@ -758,7 +754,6 @@ async function carregar_eleicao() {
 
     if (!resposta.ok) {
         alert("Erro ao carregar a eleição. Verifique o ID e tente novamente.");
-        window.location.href = "id_votacao.html";
         return;
     }
 
@@ -781,4 +776,6 @@ async function carregar_eleicao() {
     }
     );}
 
-
+if (window.location.pathname.includes("votar.html")) {
+    document.addEventListener("DOMContentLoaded", carregar_eleicao);
+}
