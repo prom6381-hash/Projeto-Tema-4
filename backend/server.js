@@ -100,7 +100,7 @@ app.post("/login", async (req, res) => {
 
     const existingUser = await User.findOne({ email });
 
-    if (existingUser && tokenType === "register") {
+    if (existingUser && tokenType === "register" && existingUser.isVerified) {
         return res.status(404).json({ error: "Utilizador já existe" });
     }
 
@@ -109,7 +109,7 @@ app.post("/login", async (req, res) => {
     }
 
 
-    if (!existingUser && tokenType === "login") {
+    if ((!existingUser || !existingUser.isVerified) && tokenType === "login") { //se o utilizador não existir ou não tiver verificado o email, não pode fazer login
         return res.status(404).json({ error: "Utilizador não encontrado" });
     }
 
@@ -309,6 +309,13 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
 })
 
 app.post("/api/votar", async(req,res)=>{
+
+    if (!req.session || !req.session.user || !req.session.user.email){
+        return res.status(401).json({error:"Utilizador não autenticado!!"});
+        window.location.href = "/login.html"; // Redireciona para a página de login
+    }
+
+
     try{
         const {id_sessao,votoCifrado,iv,tag,AAD,idEleicao}= req.body;
         if (!id_sessao || !votoCifrado || !iv || !tag || !AAD || !idEleicao){
@@ -372,6 +379,12 @@ app.post("/api/votar", async(req,res)=>{
 // FAZER a parte que corre resultados de eleições
 app.get("/eleicoes/:id/resultados", async(req,res)=>{
 
+
+    if (!req.session || !req.session.user || !req.session.user.email){
+        return res.status(401).json({error:"Utilizador não autenticado!!"});
+        window.location.href = "/login.html"; // Redireciona para a página de login
+    }
+
     try{
         const id= req.params.id;
         const eleicao= await Eleicao.findById(id);
@@ -423,6 +436,7 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
 
     if (!email || !password) {
         return res.status(400).json({ error: "Email e password são obrigatórios" });
+        window.location.href = "/login.html"; // Redireciona para a página de login
     }
 
     const user = await User.findOne({ email });
@@ -468,6 +482,7 @@ app.post("/verificar_password", async(req,res)=>{
 
     if (!email || !password) {
         return res.status(400).json({ error: "Email e password são obrigatórios" });
+        window.location.href = "/login.html"; // Redireciona para a página de login
     }
 
     const user = await User.findOne({ email });
@@ -522,6 +537,11 @@ app.post("/verificar_password", async(req,res)=>{
 
 // por agora adicionei isto para ver se a sessao está ativa/guardada
 app.get("/api/sessao-teste", (req, res) => {
+
+    if (!req.session || !req.session.user || !req.session.user.email){
+        return res.status(401).json({error:"Utilizador não autenticado!!"});
+        window.location.href = "/login.html"; // Redireciona para a página de login
+    }
     if (req.session.user) {
         res.json({
             sessao_ativa: true,
@@ -534,6 +554,10 @@ app.get("/api/sessao-teste", (req, res) => {
 });
 
 app.get("/eleicoes/:id/opcoes", async (req, res) => {
+    if (!req.session || !req.session.user || !req.session.user.email){
+        return res.status(401).json({error:"Utilizador não autenticado!!"});
+        window.location.href = "/login.html"; // Redireciona para a página de login
+    }
     try {
         const eleicao = await Eleicao.findById(req.params.id);
 
@@ -593,6 +617,11 @@ app.post("/criar-eleicao", async(req,res)=>{
 
 
 app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obter os dados da eleição, e não criar ou modificar nada
+
+    if (!req.session || !req.session.user || !req.session.user.email){
+        return res.status(401).json({error:"Utilizador não autenticado!!"});
+        window.location.href = "/login.html"; // Redireciona para a página de login
+    }
     const { codigo } = req.params;
 
     const eleicao = await Eleicao.findOne({ codigo });
@@ -622,6 +651,8 @@ app.get("/eleicoes/codigo/:codigo", async (req, res) => {
 });
 
 app.post("/guardar-chave-rsa",async (req,res)=>{
+
+
     try{
         const {email,chavePublicaRSA}=req.body;
 

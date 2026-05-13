@@ -628,40 +628,6 @@ async function encriptarVoto(chaveSessao,voto,AAD){
 
 }
 
-//async function loadCandidatos(){
-    //const idEleicao= localStorage.getItem("id_eleicao");
-    //const nomeEleicao= localStorage.getItem("nome_eleicao");
-
-    //if (!idEleicao){
-      //  alert("Nenhuma eleição foi selecionada!");
-      //  window.location.href="id_votacao.html";
-       // return;
-    //}
-    //try{ const response= await fetch(`http://localhost:4000/eleicoes/${idEleicao}/opcoes`);
-    //    const dados= await response.json();
-    //    
-   // document.getElementById("nome-eleicao").textContent=dados.nome;
-
-    //const lista= document.getElementById("lista-candidatos");
-    //lista.innerHTML='';
-    
-    //dados.opcoes.forEach(opcao=>{
-    //    const div = document.createElement("div");
-    //    div.style.margin="10px 0";
-    //    div.innerHTML=`
-                //<input type="radio" name="candidato" value="${opcao._id}" id="opcao_${opcao._id}">
-                //<label for="opcao_${opcao._id}">${opcao.nome}</label>
-          //  `;
-      // lista.appendChild(div)
-  //  });
-   // document.getElementById("btn-enviar").addEventListener("click", votar);}
-   // catch (erro){
-   //     console.error("Erro ao tentar carregar os candidatos, o erro foi:", erro);
-   //     alert("Houve um erro ao tentar carregar a eleição atual!!");
-   // }
-//
-//}//
-
 
 async function votar(){
     const  candidatoSelect=document.querySelector('input[name="candidato"]:checked');
@@ -673,11 +639,7 @@ async function votar(){
 
     const idOpcao = candidatoSelect.value;
     const idEleicao=localStorage.getItem("id_eleicao");
-    const nomeEleicao=localStorage.getItem("nome_eleicao");
-    const email=localStorage.getItem("email");
     
-    document.getElementById("voto-selecionado").textContent=idOpcao;
-
     try{
         const chavesECDH= await gerarchavesDH();
 
@@ -779,12 +741,20 @@ async function carregar_eleicao() {
 
     container.innerHTML = ""; // Limpa o container antes de adicionar os candidatos
 
-    eleicao.opcoes.forEach((opcao) => {
+    eleicao.opcoes.forEach((opcao, index) => {
         const div = document.createElement("div");
+        div.style.marginTop = "30px";
+        div.style.marginRight = "800px";
+        div.style.fontSize = "22px";
         div.innerHTML = `
-            <input type="radio" name="candidato" value="${opcao.nome}"> 
-            <label>${opcao.nome}</label>
-        `; //teve de ser opcao.nome porque o backend tem a opção como um objeto {nome: "Candidato A"}
+            <input type="radio" name="candidato" id="opcao_${index}" value="${opcao.nome}"> 
+            <label for="opcao_${index}" style="margin-left: 10px;">${opcao.nome}</label>
+            `
+        ; //teve de ser opcao.nome porque o backend tem a opção como um objeto {nome: "Candidato A"}
+        const radio = div.querySelector('input');
+        radio.addEventListener("change", function() {
+            document.getElementById("voto-selecionado").textContent = this.value;
+        });
         container.appendChild(div);
     }
     );}
