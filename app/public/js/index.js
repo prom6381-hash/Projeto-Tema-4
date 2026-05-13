@@ -774,10 +774,9 @@ async function mostraremailsessao() {
         const data = await resposta.json();
         const mostraremail = document.getElementById("mostraremailsessao");
         if (resposta.ok && data.sessao_ativa    ) {
-            const emailSessao = data.email; 
-            if (emailSessao) {
-                mostraremail.textContent = `Sessão: ${emailSessao}`;
-            }
+            mostraremail.textContent = `Sessão ativa para: ${data.email}`;
+        }   else {
+            mostraremail.textContent = "Nenhuma sessão ativa.";
         }
     } catch (erro) {
         console.error("Erro ao mostrar email da sessão:", erro);
