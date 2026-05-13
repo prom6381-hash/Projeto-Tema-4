@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["python", "criptografia/ca.py"]
+CMD ["python", "ca.py"]
