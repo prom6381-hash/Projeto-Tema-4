@@ -717,10 +717,14 @@ async function votar(){
 }
 
 async function carregar_eleicao() {
+    if (window.location.pathname.includes("enviar_token_votar.html")) {
+        return;
+    }
+    
     const params = new URLSearchParams(window.location.search);
     const idInput = params.get("id");
 
-    if (!idInput) {
+    if (!idInput && window.location.pathname.includes("votar.html")) {
         alert("ID da votação não fornecido.");
         return;
     }
@@ -759,10 +763,34 @@ async function carregar_eleicao() {
     }
     );}
 
+
+async function mostraremailsessao() {
+    try {
+        const resposta = await fetch("http://localhost:4000/api/sessao-info", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include"
+        });
+        const data = await resposta.json();
+        const mostraremail = document.getElementById("mostraremailsessao");
+        if (resposta.ok && data.sessao_ativa    ) {
+            const emailSessao = data.email; 
+            if (emailSessao) {
+                mostraremail.textContent = `Sessão: ${emailSessao}`;
+            }
+        }
+    } catch (erro) {
+        console.error("Erro ao mostrar email da sessão:", erro);
+        const mostraremail = document.getElementById("mostraremailsessao");
+        mostraremail.textContent = "Erro ao carregar email da sessão";
+    }
+}
+
 if (window.location.pathname.includes("votar.html")) {
     document.addEventListener("DOMContentLoaded", carregar_eleicao);
 }
 
+document.addEventListener("DOMContentLoaded", mostraremailsessao); //DOMContentLoaded corre o código quando o HTML estiver completamente carregado, garantindo que os elementos estão disponíveis para manipulação.
 
 //isto é para teste apenas 
 //async function enviarChaveRSA() {

@@ -18,6 +18,20 @@ nav {
     display: flex;
 }
 
+.nav-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none; /* Remove o sublinhado do link */
+    color: white;         /* Mantém o texto branco */
+    height: 100%;
+}
+
+.sessao{
+    margin-left: auto;
+    margin-right: 20px;
+    color: white;
+    font-size: 18px;
+}
 .logo {
     height: 90%;
     float: left;

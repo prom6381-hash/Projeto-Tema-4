@@ -675,6 +675,21 @@ app.post("/guardar-chave-rsa",async (req,res)=>{
     }
 });
 
+
+app.get ("/api/sessao-info", (req,res)=>{
+
+
+    if (req.session.user && req.session.user.email) {
+        res.json({
+            sessao_ativa: true,
+            email: req.session.user.email,
+            id: req.session.user.id
+        });
+    }
+    else {
+        res.status(401).json({error:"Utilizador não autenticado!!"});
+    }
+});
 //arrancar server
 
 const PORT = process.env.PORT || 4000;
