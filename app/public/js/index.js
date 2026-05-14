@@ -145,6 +145,7 @@ async function ver_resultados() {
         dados.forEach(eleicao => {
             
             const cartao = document.createElement('div');
+            cartao.dataset.id = eleicao._id;
             cartao.style.border = '1px solid #ccc';
             cartao.style.padding = '15px';
             cartao.style.margin = '10px 0';
@@ -187,8 +188,24 @@ async function ver_resultados() {
             cartao.appendChild(eleicaobutao);
             
             exibir.appendChild(cartao);
-        });
+
+        }); 
         
+        const blocoInicial = document.getElementById("bloco2");
+        blocoInicial.style.display = "none";
+
+        const blocoRecarregar = document.getElementById("bloco-recarregar");
+        const botaoRecarregar = document.createElement("button");
+        botaoRecarregar.textContent = "Recarregar resultados";
+        botaoRecarregar.className = "Botão";
+        blocoRecarregar.innerHTML = ""; //limpar o lbloco par não duplicar blocos sempre que se carregar 
+        botaoRecarregar.onclick = () => {
+            document.getElementById("resultados").innerHTML = "";
+            ver_resultados();
+        }
+        blocoRecarregar.appendChild(botaoRecarregar);
+
+
     } catch (erro) {
         console.error('O erro é', erro);
         const container = document.getElementById('resultados-container');
@@ -199,15 +216,27 @@ async function ver_resultados() {
 // ver resultados de uma eleição
 async function ver_uma_eleicao(id) {
     try {
+
+    
         const resposta = await fetch(`http://localhost:4000/eleicoes/${id}/resultados`);
         
-        if (!resposta.ok) {
+        if (!resposta.ok) { 
+            if (resposta.status === 401) {
+                alert("O utilizador tem de ter sessão iniciada")
+                return
+            }
             alert("Erro ao carregar resultados.");
             return;
         }
         
         const dados = await resposta.json();
-        
+
+        const cartoes = document.querySelectorAll("#resultados-container div");
+        cartoes.forEach(cartao => {
+            if (cartao.dataset.id !== id) {
+                cartao.style.display = "none";
+            }
+    })
         const container = document.getElementById('resultados');
         container.innerHTML = '';
         
@@ -774,9 +803,13 @@ async function mostraremailsessao() {
         const data = await resposta.json();
         const mostraremail = document.getElementById("mostraremailsessao");
         if (resposta.ok && data.sessao_ativa    ) {
-            mostraremail.textContent = `Sessão ativa para: ${data.email}`;
+            mostraremail.textContent = `Olá, ${data.email}`;
         }   else {
-            mostraremail.textContent = "Nenhuma sessão ativa.";
+            mostraremail.textContent = "Nenhuma sessão ativa, carregue aqui para voltar para a página de iniciar sessão";
+            mostraremail.style.cursor = "pointer";
+            mostraremail.onclick = () => (
+                window.location.href = "index.html"
+            )
         }
     } catch (erro) {
         console.error("Erro ao mostrar email da sessão:", erro);

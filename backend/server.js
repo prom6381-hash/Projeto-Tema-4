@@ -26,6 +26,7 @@ app.use(session({
 
 const connectDB = require("./base_de_dados.js");
 const { message } = require("statuses");
+const election = require("./models/election");
 connectDB();
 app.use(express.json());
 
@@ -381,7 +382,7 @@ app.get("/eleicoes/:id/resultados", async(req,res)=>{
 
 
     if (!req.session || !req.session.user || !req.session.user.email){
-        return res.status(401).json({error:"Utilizador não autenticado!!"});
+        return res.status(401).json({error:"Utilizador não autenticado!"});
         window.location.href = "/login.html"; // Redireciona para a página de login
     }
 
@@ -636,13 +637,24 @@ app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obte
 });
 
 app.get("/eleicoes", async (req, res) => {
-    try {
-        const eleicoes = await Eleicao.find();
-        res.json(eleicoes);
-    } catch (erro) {
-        res.status(500).json({ error: "Erro ao buscar eleições" });
+
+    if (!req.session || !req.session.user || !req.session.user.email){
+        return res.status(401).json({error:"Utilizador não autenticado!!"});
+        window.location.href = "/login.html"; // Redireciona para a página de login
     }
-});
+    
+    try { 
+        const user = req.session.user.id;
+        const eleicoes = await election.find( {id_criador: user});
+        return res.json(eleicoes);
+    } catch (error) {
+        console.error("Erro ao criar a eleição:", error);
+        return res.status(500).json({ error: "Houve um erro interno ao criar a eleição!" });
+    }});
+
+
+
+
 
 app.get("/eleicoes/codigo/:codigo", async (req, res) => {
     const eleicao = await Eleicao.findOne({ codigo: req.params.codigo });
