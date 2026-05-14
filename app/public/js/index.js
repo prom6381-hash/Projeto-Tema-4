@@ -102,7 +102,7 @@ async function criar_eleicao() {
                 alert(data.error);
             }
 } catch (error) {
-    alert("Erro ao criar a eleição. Tente novamente mais tarde.");
+    alert("Erro ao   a eleição. Tente novamente mais tarde.");
 }
 }
 
@@ -466,11 +466,11 @@ async function verificarforcasenha() {
     const temEspecial = /[^A-Za-z0-9]/.test(password);
     const temTamanho = password.length >= 8;
 
-    atualizarRequisito("maiuscula", temMaiuscula);
-    atualizarRequisito("minuscula", temMinuscula);
-    atualizarRequisito("numero", temNumero);
-    atualizarRequisito("especial", temEspecial);
-    atualizarRequisito("tamanho", temTamanho);
+    atualizarforcasenha("maiuscula", temMaiuscula);
+    atualizarforcasenha("minuscula", temMinuscula);
+    atualizarforcasenha("numero", temNumero);
+    atualizarforcasenha("especial", temEspecial);
+    atualizarforcasenha("tamanho", temTamanho);
 }
 
 async function atualizarforcasenha(id, valido) {
@@ -876,8 +876,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const passwordInput = document.getElementById("password");
 
+    if (passwordInput) {
     passwordInput.addEventListener("input", verificarforcasenha);
-
+    }
 });
 //isto é para teste apenas 
 //async function enviarChaveRSA() {
