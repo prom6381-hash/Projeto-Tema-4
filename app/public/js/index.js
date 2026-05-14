@@ -842,7 +842,7 @@ async function carregar_eleicao() {
 
 async function mostraremailsessao() {
     try {
-        const resposta = await fetch("http://localhost:4000/api/sessao-info", {
+        const resposta = await fetch("/api/sessao-info", {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             credentials: "include"
