@@ -80,7 +80,7 @@ async function criar_eleicao() {
     console.log("Data de Fim:", data_fim);
 
     try {
-        const resposta = await fetch("http://localhost:4000/criar-eleicao", {    
+        const resposta = await fetch("/criar-eleicao", {    
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -125,7 +125,7 @@ async function pedirTokenCriar() {
 // ver resultados lista
 async function ver_resultados() {
     try {
-        const resposta = await fetch('http://localhost:4000/eleicoes');
+        const resposta = await fetch('/eleicoes');
         
         if (!resposta.ok) {
             alert("Erro ao carregar eleições.");
@@ -216,9 +216,8 @@ async function ver_resultados() {
 // ver resultados de uma eleição
 async function ver_uma_eleicao(id) {
     try {
+        const resposta = await fetch(`/eleicoes/${id}/resultados`);
 
-    
-        const resposta = await fetch(`http://localhost:4000/eleicoes/${id}/resultados`);
         
         if (!resposta.ok) { 
             if (resposta.status === 401) {
@@ -293,7 +292,7 @@ async function pedirToken(tipo) {
             return;
         }
 
-        const response = await fetch("http://localhost:4000/login", {
+        const response = await fetch("/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -324,7 +323,7 @@ async function pedirToken(tipo) {
             alert(data.error);
         }
     } else if (tipo === "vote" || tipo === "create") {
-        const response = await fetch("http://localhost:4000/login", {
+        const response = await fetch("/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"},
@@ -371,7 +370,7 @@ async function verificar_token() {
         return;
     }
 
-    const response = await fetch("http://localhost:4000/verify-token", {
+    const response = await fetch("/verify-token", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -437,8 +436,9 @@ async function criarSenha() {
         return;
     }
     const chavepublicaRSA= await gerarChavesRSA();
+    console.log("chavepublicaRSA gerada:", chavepublicaRSA ? "SIM" : "NÃO");
 
-    const response = await fetch("http://localhost:4000/create-password", {
+    const response = await fetch("/create-password", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -498,7 +498,7 @@ async function verificarSenha() {
         return;
     } 
 
-    const response = await fetch("http://localhost:4000/verificar_password", {
+    const response = await fetch("/verificar_password", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -512,12 +512,11 @@ async function verificarSenha() {
     if (response.ok) {
         if(!localStorage.getItem("chave_Privada_RSA")){
             const chavePublicaRSA=await gerarChavesRSA();
-            await fetch("http://localhost:4000/guardar-chave-rsa",{
+            await fetch("/guardar-chave-rsa",{
                 method:"POST",
                 headers: {"Content-Type": "application/json"},
                 credentials:"include",
-                body:JSON.stringify({
-                    email:email,
+                body:JSON.stringify({ //tirei o email, para o browser usar apenas o email de sessao
                     chavePublicaRSA: chavePublicaRSA
                 })
             });
@@ -539,7 +538,7 @@ async function id_votacao() {
     }
 
 
-    const response = await fetch (`http://localhost:4000/eleicoes/${idInput}`, {
+    const response = await fetch (`/eleicoes/${idInput}`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json"
@@ -549,8 +548,8 @@ async function id_votacao() {
     const data = await response.json();
 
     if (response.ok) {
-        localStorage.setItem("id_eleicao",idInput);
-        localStorage.setItem("nome_eleicao",data.nome);
+        localStorage.setItem("id_eleicao",data._id); //troco para data._id pq no votar() nós utilizamos o id da base de dados não dao id da eleição,
+        localStorage.setItem("nome_eleicao",data.nome); // e nos resultados das eleições nós procuramos pelo _id
 
         window.location.href = `votar.html?id=${idInput}`;
     } else {
@@ -729,11 +728,11 @@ async function votar(){
         );
 
         const assinatura=await assinaturaRSA(chavesECDH.chavePublica,chaveprivadaRSA);
-        const respostaInicio=await fetch("http://localhost:4000/api/iniciar-votacao", {
+        const respostaInicio=await fetch("/api/iniciar-votacao", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                //email: email,    faço isto para testar
+                //email: email,    faço isto para testar 
                 chavepub_remota: chavesECDH.chavePublica,
                 assinatura: assinatura
             })
@@ -745,18 +744,26 @@ async function votar(){
             return;
         }
 
-        const chaveSessao= await calcularchaveSessao(
-            chavesECDH.chavePrivada,
-            dadosInicio.chave_publica_dh
-        )
+        const chaveSessao= await crypto.subtle.importKey( //antes tinha o nome da funcao que gera chaves de sessao
+            //chavesECDH.chavePrivada,      e agora alterei para ter o mesmo formato que o do browser
+            //dadosInicio.chave_publica_dh   pq estava a dar erro de cryptography.exceptions.InvalidTag
+            "raw",
+            base64ParaArraybuffer(dadosInicio.chave_sessao),
+            {name:"AES-GCM"},
+            false,
+            ["encrypt"]     
+        );
 
         const votoEncriptado= await encriptarVoto(
             chaveSessao,
             idOpcao,
             idEleicao
-        )
+        );
+        console.log("Voto encriptado - iv:", votoEncriptado.iv.substring(0, 20) + "...");
+        console.log("Voto encriptado - tag:", votoEncriptado.tag.substring(0, 20) + "...");
+        console.log("Voto encriptado - votoCifrado:", votoEncriptado.votoCifrado.substring(0, 20) + "...");
 
-        const respostaVoto= await fetch("http://localhost:4000/api/votar", {
+        const respostaVoto= await fetch("/api/votar", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -798,7 +805,7 @@ async function carregar_eleicao() {
         return;
     }
 
-    const resposta = await fetch(`http://localhost:4000/eleicoes/${idInput}`);
+    const resposta = await fetch(`/eleicoes/${idInput}`);
 
     if (!resposta.ok) {
         alert("Erro ao carregar a eleição. Verifique o ID e tente novamente.");
@@ -818,10 +825,10 @@ async function carregar_eleicao() {
         const div = document.createElement("div");
         div.style.marginTop = "30px";
         div.style.marginRight = "800px";
-        div.style.fontSize = "22px";
+        div.style.fontSize = "22px";// tive de mudar,abaixo, opcao.nome para ._id pq o nosso backend guarda através do id não o nome
         div.innerHTML = `
-            <input type="radio" name="candidato" id="opcao_${index}" value="${opcao.nome}"> 
-            <label for="opcao_${index}" style="margin-left: 10px;">${opcao.nome}</label>
+            <input type="radio" name="candidato" id="opcao_${index}" value="${opcao._id}"> 
+            <label for="opcao_${index}" style="margin-left: 10px;">${opcao.nome}</label>  
             `
         ; //teve de ser opcao.nome porque o backend tem a opção como um objeto {nome: "Candidato A"}
         const radio = div.querySelector('input');
