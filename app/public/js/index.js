@@ -845,7 +845,7 @@ async function mostraremailsessao() {
         if (resposta.ok && data.sessao_ativa    ) {
             mostraremail.textContent = `Olá, ${data.email}`;
         }   else {
-            mostraremail.textContent = "Nenhuma sessão ativa, carregue aqui para voltar para a página de iniciar sessão";
+            mostraremail.textContent = "Registar/Iniciar Sessão";
             mostraremail.style.cursor = "pointer";
             mostraremail.onclick = () => (
                 window.location.href = "index.html"
