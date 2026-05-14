@@ -40,27 +40,63 @@ const sessoesVotar={}; // armazenar temporariamente as sessões de votação a o
 function gerarCodigoEleicao() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
-async function gerarchavesDH(){
-    const response= await fetch("http://servidor-ca:5000/dh/gerar-chaves", {method: "POST"});
+async function gerarchavesDH() {
+    const response = await fetch("http://servidor-ca:5000/dh/gerar-chaves", {
+        method: "POST"
+    });
     return await response.json();
 }
 
 async function calculoChaveSessao(chavepub_remota){
+    const chavePEM=base64ParaPEM(chavepub_remota,"PUBLIC KEY") //mesmo erro que tive na assinaturaRSA
     const response= await fetch("http://servidor-ca:5000/dh/chave-sessao", {method: "POST", headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({chave_publica_remota: chavepub_remota})});
-    return await response.json();
+    body: JSON.stringify({chave_publica_remota: chavePEM})});
+    const text = await response.text();
+    console.log("Resposta sessão ECDH:", text.substring(0, 200));
+    
+    if (!response.ok) {
+        throw new Error(`Erro sessão ECDH: ${text}`);
+    }
+
+    return JSON.parse(text);
+}
+function base64ParaPEM(base64,type){  //tive de fazer esta função pq ao votaar estava a dar erro interno pq o servidor estava a compara um ficheiro pem com um base64(browser)
+    const linhas= base64.match(/.{1,64}/g); // Estava a dar este erro--> ValueError: Unable to load PEM file. MalformedFraming
+    const body= linhas.join('\n');
+    return `-----BEGIN ${type}-----\n${body}\n-----END ${type}-----`;
+}
+
+function PEMparabase64(pem){  //tive de fazer esta função pq ao votaar estava a dar erro Houve um erro ao tentar processar o voto!! 
+    //Estava a dar este erro--> ValueError: Unable to load PEM file. MalformedFraming
+    return pem// Pq, no calculo de chavessessao utilizei a chave publica do cliente para ser convertido para PEM e não base64(SPKI)
+        .replace('-----BEGIN PUBLIC KEY-----', '')
+        .replace('-----END PUBLIC KEY-----', '')
+        .replace(/\n/g, '')
+        .trim();                
 }
 
 async function assinaturaRSA(chavepubRSA,dados,assinatura){
+    const chavePEM=base64ParaPEM(chavepubRSA,"PUBLIC KEY") //deu erro pq pus com underscore _
+    console.log("Chave PEM enviada:", chavePEM.substring(0, 100) + "...");
     const response= await fetch("http://servidor-ca:5000/rsa/integridade", {method: "POST", headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({chave_publica: chavepubRSA,
+    body: JSON.stringify({chave_publica: chavePEM,
         dados: dados,
         assinatura: assinatura
     })});
-    return await response.json();
+    const text = await response.text();
+    console.log("Resposta do servidor-ca:", text.substring(0, 200));
+    
+    if (!response.ok) {
+        throw new Error(`Erro RSA: ${text}`);
+    }
+
+    return JSON.parse(text);
 }
 
 async function desencriptarVoto(chave,AAD,iv,votoCifrado,tag){
+    console.log("AES - chave:", chave);
+    console.log("AES - AAD:", AAD);
+    console.log("AES - iv:", iv);
     const response= await fetch("http://servidor-ca:5000/aes/desencriptar", {method: "POST", headers: {"Content-Type":"application/json"},
     body: JSON.stringify({chave:chave, 
         data_associada:AAD,
@@ -68,78 +104,83 @@ async function desencriptarVoto(chave,AAD,iv,votoCifrado,tag){
         voto_cifrado:votoCifrado,
         tag:tag
     })});
-    return await response.json();
+    const text = await response.text();
+    console.log("Resposta AES:", text.substring(0, 300));
+    
+    if (!response.ok) {
+        throw new Error(`Erro AES: ${text}`);
+    }
+    
+    return JSON.parse(text);
 }
 
 
 
 
 app.post("/login", async (req, res) => {
-    const {tokenType } = req.body;
-    
+    const { tokenType } = req.body;
+    console.log("1. tokenType:", tokenType);
 
     if (!tokenType) {
+        console.log("2. FALHOU: tokenType vazio");
         return res.status(400).json({ error: "Dados inválidos" });
     }
 
-    let email; // Declarar a variável email fora do bloco if para que possa ser usada posteriormente. Caso não fosse assim, daria erro de "email is not defined"
-
-    if (tokenType == "vote" || tokenType == "create") {
+    let email;
+    if (tokenType === "vote" || tokenType === "create") {
+        console.log("3. vote/create - sessão:", req.session?.user?.email);
         if (!req.session || !req.session.user || !req.session.user.email) {
-            return res.status(401).json({ error: "O utilizador não está autenticado!" });
+            return res.status(401).json({ error: "Não autenticado" });
         }
-        else {
-            email = req.session.user.email;
-        }
+        email = req.session.user.email;
     } else {
         email = req.body.email;
     }
+    console.log("4. email:", email);
 
-    if (!tokenType) {
-        return res.status(400).json({ error: "Dados inválidos" });
+    if (!email) {
+        console.log("5. FALHOU: email vazio");
+        return res.status(400).json({ error: "Email obrigatório" });
     }
 
     const existingUser = await User.findOne({ email });
+    console.log("existingUser:", existingUser ? existingUser.email : "null");
 
-    if (existingUser && tokenType === "register" && existingUser.isVerified) {
-        return res.status(404).json({ error: "Utilizador já existe" });
+    if (tokenType === "register") {
+    console.log("REGISTO: existingUser.isVerified:", existingUser?.isVerified);
+    if (existingUser && existingUser.isVerified) {
+        console.log("REGISTO: Utilizador já existe e está verificado");
+        return res.status(400).json({ error: "Utilizador já existe" });
+    }
+    if (existingUser) {
+        console.log("REGISTO: Apagando utilizador não verificado");
+        await User.deleteOne({ email });
+    }
+    console.log("REGISTO: Criando novo utilizador");
+    await User.create({ email, isVerified: false });
+    }   
+
+    // LOGIN
+    if (tokenType === "login") {
+        if (!existingUser || !existingUser.isVerified) {
+            return res.status(404).json({ error: "Utilizador não encontrado" });
+        }
     }
 
-    if (!existingUser && tokenType === "register") {
-        await User.create({ email, isVerified: false }); //cria um novo utilizador com o email fornecido e isVerified como false (antes de criar password)
-    }
-
-
-    if ((!existingUser || !existingUser.isVerified) && tokenType === "login") { //se o utilizador não existir ou não tiver verificado o email, não pode fazer login
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-    }
-
-    if (tokenType !== "register" && tokenType !== "login" && tokenType !== "vote" && tokenType !== "create") {
-        return res.status(400).json({ error: "Tipo de token inválido" });
-    }
-
-
-    //token.js criar token
+    // Gerar token
     const token = generateToken();
-
-    //hmac.js criar hash do token
-
     const tokenHash = hashToken(token, email);
-
-    //usar mongodb para guardar o token
-
-    const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_TIME); //new Date(), pois esta não transforma em string e no formato correto
+    const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_TIME);
 
     await Token.findOneAndUpdate(
         { email },
-        { tokenHash, expiresAt, tokenType},
-        { upsert: true, new: true },  //se não existir, cria um novo documento e retorna o documento atualizado ou criado
+        { tokenHash, expiresAt, tokenType },
+        { upsert: true, new: true }
     );
 
     await sendTokenEmail(email, token);
 
-    return res.json({  message: "Token gerado e enviado"
-    });
+    return res.json({ message: "Token gerado e enviado" });
 });
 
 
@@ -300,7 +341,8 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
         };
         return res.json({
             id_sessao: idSessao,
-            chave_publica_dh: chavesDH.chave_publica
+            chave_publica_dh: PEMparabase64(chavesDH.chave_publica),
+            chave_sessao: sessao.chave_sessao
         });
 
     }  catch (erro){
@@ -465,7 +507,7 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
     const data = await response.json();
 
     const certData = await certResponse.json();
-
+    console.log("chavePublicaRSA recebida:", req.body.chavePublicaRSA ? "sim" : "nao");
     user.chavePublicaRSA=req.body.chavePublicaRSA;
     user.certificate = certData.certificate; //guarda o certificado do utilizador na base de dados
     user.passwordHash = data.hash;
@@ -666,12 +708,13 @@ app.post("/guardar-chave-rsa",async (req,res)=>{
 
 
     try{
-        const {email,chavePublicaRSA}=req.body;
+        const {chavePublicaRSA}=req.body; // tmb tirei aqui o email, pq pode não coincidir com o email de sessao
 
-        if (!email || !chavePublicaRSA){
-            return res.status(400).json({error: "Dados incompletos!!"});
+        if (!req.session || !req.session.user || !req.session.user.email){
+            return res.status(401).json({error: "User não foi autenticado!!"});
         }
 
+        const email= req.session.user.email;
         const user= await User.findOne({email});
         if (!user){
             return res.status(404).json({error:"User not found!!"});

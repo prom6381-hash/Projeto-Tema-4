@@ -27,6 +27,11 @@ const UserSchema = new mongoose.Schema({
         required: false
     },
 
+    chavePublicaRSA:{
+        type: String,
+        required: false
+    },
+
     createdAt: {
         type: Date,
         default: Date.now
