@@ -23,6 +23,13 @@
 
             <p><strong>Palavra-passe:</strong></p>
             <input type="password" placeholder="Password" id="password"><br>
+                <div id="requisitos-password" style="font-size: 13px; margin-top: -20px ">
+                    <p id="maiuscula">❌ Pelo menos 1 letra maiúscula</p>
+                    <p id="minuscula">❌ Pelo menos 1 letra minúscula</p>
+                    <p id="numero">❌ Pelo menos 1 número</p>
+                    <p id="especial">❌ Pelo menos 1 caractere especial</p>
+                    <p id="tamanho">❌ Pelo menos 8 caracteres</p>
+                </div>
             <p><strong>Confirmar palavra-passe:</strong></p>
             <input type="password" placeholder="Confirmar Password" id="confirmar_password"><br>
             <button onclick="criarSenha()" class="Botão" type="button" style="padding: 15px; font-size: 20px;">Criar palavra-passe</button>

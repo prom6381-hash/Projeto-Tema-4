@@ -412,6 +412,7 @@ async function criarSenha() {
     const password = document.getElementById("password").value;
     const confirmarPassword = document.getElementById("confirmar_password").value;
 
+
     const params = new URLSearchParams(window.location.search);
     const email = params.get("email");
 
@@ -424,7 +425,17 @@ async function criarSenha() {
         alert("As senhas não coincidem. Tente novamente.");
         return;
     }   
+    const passwordForte =
+        /[A-Z]/.test(password) &&
+        /[a-z]/.test(password) &&
+        /[0-9]/.test(password) &&
+        /[^A-Za-z0-9]/.test(password) &&
+        password.length >= 8;
 
+    if (!passwordForte) {
+        alert("A password não cumpre os requisitos de segurança.");
+        return;
+    }
     const chavepublicaRSA= await gerarChavesRSA();
 
     const response = await fetch("http://localhost:4000/create-password", {
@@ -442,6 +453,35 @@ async function criarSenha() {
         window.location.href = "index.html";
     } else {
         alert(data.error);
+    }
+}
+
+async function verificarforcasenha() {
+    
+    const password = document.getElementById("password").value;
+
+    const temMaiuscula = /[A-Z]/.test(password);
+    const temMinuscula = /[a-z]/.test(password);
+    const temNumero = /[0-9]/.test(password);
+    const temEspecial = /[^A-Za-z0-9]/.test(password);
+    const temTamanho = password.length >= 8;
+
+    atualizarRequisito("maiuscula", temMaiuscula);
+    atualizarRequisito("minuscula", temMinuscula);
+    atualizarRequisito("numero", temNumero);
+    atualizarRequisito("especial", temEspecial);
+    atualizarRequisito("tamanho", temTamanho);
+}
+
+async function atualizarforcasenha(id, valido) {
+    const elemento = document.getElementById(id);
+
+    if (valido) {
+        elemento.textContent = "✅ " + elemento.textContent.slice(2);
+        elemento.style.color = "green";
+    } else {
+        elemento.textContent = "❌ " + elemento.textContent.slice(2);
+        elemento.style.color = "red";
     }
 }
 
@@ -822,8 +862,16 @@ if (window.location.pathname.includes("votar.html")) {
     document.addEventListener("DOMContentLoaded", carregar_eleicao);
 }
 
+
 document.addEventListener("DOMContentLoaded", mostraremailsessao); //DOMContentLoaded corre o código quando o HTML estiver completamente carregado, garantindo que os elementos estão disponíveis para manipulação.
 
+document.addEventListener("DOMContentLoaded", () => {
+
+    const passwordInput = document.getElementById("password");
+
+    passwordInput.addEventListener("input", verificarforcasenha);
+
+});
 //isto é para teste apenas 
 //async function enviarChaveRSA() {
   //  const chavePublicaRSA = localStorage.getItem("chave_Privada_RSA");
