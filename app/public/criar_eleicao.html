@@ -22,18 +22,55 @@
             <input type="text" id="nome-eleicao">
         </div>
         
-        <div style="display: flex; gap: 160px;">
+        <div style="margin-top: 15px;">
+            <p>Tipo de Eleição</p>
+            <select id="tipo-privacidade" onchange="alternarCamposPrivacidade()" style="padding: 10px; border-radius: 10px; font-size: 16px; width: 100%; max-width: 300px;">
+                <option value="publica">Pública</option>
+                <option value="privada">Privada</option>
+            </select>
+        </div>
 
-            <div style="flex:1;">
+        <div id="configuracao-privada" style="display: none; width: 100%; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
+            <h3>Configuração de Acesso Privado</h3>
+            
+            <p>Palavra-passe da Eleição</p>
+            <input type="password" id="senha-eleicao" placeholder="Digite a senha para os votantes">
 
-                <div id="lista-candidatos"> <!--Não coloquei no input porque para cada input teria um id diferente e iria repetir -->
-                        <h3>Candidatos</h3>
-                        <p style="margin-bottom: 3%">Nome do Candidato</p>
-                        <input type="text">
+            <div style="display: flex; gap: 40px; margin-top: 15px;">
+                <div style="flex: 1;">
+                    <p>Domínios Autorizados</p>
+                    <div id="lista-dominios">
+                        <div><input type="text" name="dominio" placeholder="@instituicao.pt"></div>
+                    </div>
+                    <div style="display: flex; gap: 5px; margin-top: 5px;">
+                        <button class="Botão" style="padding: 8px; font-size: 12px;" onclick="adicionar_dominio()">+ Domínio</button>
+                        <button class="Botão" style="padding: 8px; font-size: 12px;" onclick="remover_dominio()">- Domínio</button>
+                    </div>
                 </div>
 
+                <div style="flex: 1;">
+                    <p>E-mails Autorizados</p>
+                    <div id="lista-email">
+                        <div class="campo-email-container"><input type="text" name="email_eleicao" placeholder="user@instituicao.pt"></div>
+                    </div>
+                    <div style="display: flex; gap: 5px; margin-top: 5px;">
+                        <button class="Botão" style="padding: 8px; font-size: 12px;" onclick="adicionar_email()">+ E-mail</button>
+                        <button class="Botão" style="padding: 8px; font-size: 12px;" onclick="remover_email()">- E-mail</button>
+                    </div>
+                    <input type="file" accept=".txt" onchange="importarFicheiro(this)" style="margin-top: 10px; font-size: 12px;">
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 160px; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
+            <div style="flex:1;">
+                <div id="lista-candidatos">
+                    <h3>Candidatos</h3>
+                    <p style="margin-bottom: 3%">Nome do Candidato</p>
+                    <div><input type="text" name="candidato"></div>
+                </div>
                 <div style="display: flex; gap: 10px;">
-                    <button class="Botão" style="flex: 1;; padding: 12px" onclick="adicionar_candidatos()">Adicionar candidato</button>
+                    <button class="Botão" style="flex: 1; padding: 12px" onclick="adicionar_candidatos()">Adicionar candidato</button>
                     <button class="Botão" style="flex: 1; padding: 12px;" onclick="remover_candidato()">Remover candidato</button>
                 </div>
             </div>
@@ -41,10 +78,8 @@
             <div style="flex: 1">
                 <p>Data de Início</p>
                 <input type="datetime-local" id="data-inicio">
-
                 <p>Data de Fim</p>
                 <input type="datetime-local" id="data-fim">
-            
             </div>
         </div>
 

@@ -35,10 +35,15 @@ async function criar_eleicao() {
 
     const candidatos = [];
     const inputs = document.querySelectorAll('#lista-candidatos input[type="text"]');
-    if (inputs.length === 0) {
+    inputs.forEach(input => {
+        if (input.value.trim() !== "") {
+            candidatos.push(input.value.trim());
+        }
+    });
+
+    if (candidatos.length === 0) {
         alert("Por favor, adicione pelo menos um candidato.");
         return;
-    }
 
     const data_inicio = document.getElementById('data-inicio').value;
     if (data_inicio === "") {
@@ -68,11 +73,36 @@ async function criar_eleicao() {
         return;
     }
     
-    inputs.forEach(input => {
-        if (input.value.trim() !== "") {
-            candidatos.push(input.value.trim());
+    const tipoPrivacidade = document.getElementById("tipo-privacidade").value;
+    let dadosPrivacidade = { tipo: tipoPrivacidade };
+    if (tipoPrivacidade === "privada") {
+        const senha = document.getElementById("senha-eleicao").value;
+        if (senha.trim() === "") {
+            alert("Eleições privadas exigem uma palavra-passe.");
+            return;
         }
-    });
+        
+        const dominios = [];
+        document.querySelectorAll('input[name="dominio"]').forEach(input => {
+            if (input.value.trim() !== "") dominios.push(input.value.trim());
+        });
+
+        const emails = [];
+        document.querySelectorAll('input[name="email_eleicao"]').forEach(input => {
+            if (input.value.trim() !== "") emails.push(input.value.trim());
+        });
+
+        if (dominios.length === 0 && emails.length === 0) {
+            alert("Para eleições privadas, defina pelo menos um domínio ou um e-mail autorizado.");
+            return;
+        }
+
+        dadosPrivacidade.senha = senha;
+        dadosPrivacidade.dominios = dominios;
+        dadosPrivacidade.emails = emails;
+    }
+
+
 
     console.log("Eleição Criada:", nomeEleicao);
     console.log("Candidatos:", candidatos);
@@ -90,7 +120,8 @@ async function criar_eleicao() {
                 nome: nomeEleicao,
                 candidatos,
                 data_inicio,
-                data_fim
+                data_fim,
+                privacidade: dadosPrivacidade
             })
         }) 
         const data = await resposta.json();
@@ -902,7 +933,22 @@ function verificar_existe_dominio() {
         alert("Adicione pelo menos um domínio para prosseguir!");
         return;
     }
-    window.location.href = "criar_eleicao.html"
+
+    const dominios = [];
+
+    inputsDominio.forEach(input => {
+
+        const dominio = input.value.trim();
+
+        if (dominio !== "") {
+            dominios.push(dominio);
+        }
+    });
+
+    sessionStorage.setItem("tipo_privacidade", "dominios");
+    sessionStorage.setItem("dominios_permitidos", JSON.stringify(dominios));
+    window.location.href = "criar_eleicao.html";
+
 
 }
 
@@ -932,12 +978,13 @@ function remover_email() {
 }
 
 function verificar_existe_email() {
-    const inputsDominio = document.querySelectorAll('input[name="email"]');
+    const inputsEmail = document.querySelectorAll('input[name="email"]');
     
-    if (inputsDominio.length === 0 || inputsDominio[0].value.trim() === "") {
+    if (inputsEmail.length === 0 || inputsEmail[0].value.trim() === "") {
         alert("Adicione pelo menos um email para prosseguir!");
         return;
     }
+
     window.location.href = "criar_eleicao.html"
 }
 
@@ -973,6 +1020,98 @@ if (window.location.pathname.includes("votar.html")) {
 }
 
 
+async function criar_eleicao_privada() {
+    const nomeEleicao = document.getElementById('nome-eleicao').value.trim();
+    const senha = document.getElementById('senha_eleicao').value.trim();
+
+
+    if (nomeEleicao === "") {
+        alert("Insira o nome da eleição.");
+        return;
+    }
+
+    if (senha.length < 6) {
+        alert("A senha deve ter pelo menos 6 caracteres.");
+        return;
+    }
+
+    const candidatos = [];
+
+    const inputs = document.querySelectorAll('#lista-candidatos input[type="text"]');
+
+    inputs.forEach(input => {
+
+        if (input.value.trim() !== "") {
+            candidatos.push(input.value.trim());
+        }
+    });
+
+    if (candidatos.length === 0) {
+        alert("Adicione candidatos.");
+        return;
+    }
+
+    const data_inicio = document.getElementById('data-inicio').value;
+    const data_fim = document.getElementById('data-fim').value;
+
+    const tipo_privacidade = sessionStorage.getItem("tipo_privacidade");
+
+    const emails = JSON.parse(sessionStorage.getItem("emails_permitidos")) || [];
+
+    const dominios = JSON.parse(sessionStorage.getItem("dominios_permitidos")) || [];
+
+    try {
+
+        const resposta = await fetch("/criar-eleicao-privada", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            credentials: "include",
+
+            body: JSON.stringify({
+
+                nome: nomeEleicao,
+                senha,
+                candidatos,
+                data_inicio,
+                data_fim,
+
+                tipo_privacidade,
+
+                emails_permitidos: emails,
+
+                dominios_permitidos: dominios
+            })
+        });
+
+        const data = await resposta.json();
+
+        if (resposta.ok) {
+
+            sessionStorage.removeItem("emails_permitidos");
+            sessionStorage.removeItem("dominios_permitidos");
+            sessionStorage.removeItem("tipo_privacidade");
+
+            alert(`Eleição criada! Código: ${data.codigo}`);
+
+            window.location.href = "votar_ou_criar.html";
+
+        } else {
+
+            alert(data.error);
+        }
+
+    } catch (erro) {
+
+        alert("Erro ao criar eleição.");
+    }
+}
+
+
 document.addEventListener("DOMContentLoaded", mostraremailsessao); //DOMContentLoaded corre o código quando o HTML estiver completamente carregado, garantindo que os elementos estão disponíveis para manipulação.
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -983,6 +1122,12 @@ document.addEventListener("DOMContentLoaded", () => {
     passwordInput.addEventListener("input", verificarforcasenha);
     }
 });
+
+
+
+
+
+
 //isto é para teste apenas 
 //async function enviarChaveRSA() {
   //  const chavePublicaRSA = localStorage.getItem("chave_Privada_RSA");
@@ -1007,5 +1152,4 @@ document.addEventListener("DOMContentLoaded", () => {
     
    //  const data = await response.json();
   //   console.log(data);
-   //  alert(data.message || data.error);
-// }
+   //  alert(data.message || data.error)
