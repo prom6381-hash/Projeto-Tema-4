@@ -14,6 +14,7 @@ const Voto = require("./models/Voto");
 const Eleicao= require("./models/election");
 const EleicaoEleitor = require("./models/eleicaoEleitor");
 const app = express();
+const rateLimit = require("express-rate-limit");
 
 app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
 app.use(session({
@@ -24,9 +25,12 @@ app.use(session({
 }));
 
 
+
 const connectDB = require("./base_de_dados.js");
 const { message } = require("statuses");
 const election = require("./models/election");
+const eleicaoEleitor = require("./models/eleicaoEleitor");
+const { json } = require("body-parser");
 connectDB();
 app.use(express.json());
 
@@ -35,6 +39,24 @@ const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
 // - Pedir token - login
 
 const sessoesVotar={}; // armazenar temporariamente as sessões de votação a ocorrerem
+
+
+// limitar por ip:
+
+const loginLimiter = rateLimit({
+    windowMs: 5* 60 * 1000,
+    max: 5 ,
+    //keyGenerator: (req) => req.body.email, ----- COLOCAR ISTO PARA BLOQUEAR POR EMAIL, SEM ISTO É POR IP
+    handler: (req, res) => {  //costuma a resposta 
+        return res.status(429).json({
+            error: "Demasiados emails enviados. Tente novamente mais tarde."
+        });
+    }
+});
+
+
+
+
 
 
 function gerarCodigoEleicao() {
@@ -117,7 +139,7 @@ async function desencriptarVoto(chave,AAD,iv,votoCifrado,tag){
 
 
 
-app.post("/login", async (req, res) => {
+app.post("/login", loginLimiter, async (req, res) => {
     const { tokenType } = req.body;
     console.log("1. tokenType:", tokenType);
 
@@ -143,6 +165,8 @@ app.post("/login", async (req, res) => {
         return res.status(400).json({ error: "Email obrigatório" });
     }
 
+
+    
     const existingUser = await User.findOne({ email });
     console.log("existingUser:", existingUser ? existingUser.email : "null");
 
@@ -355,7 +379,6 @@ app.post("/api/votar", async(req,res)=>{
 
     if (!req.session || !req.session.user || !req.session.user.email){
         return res.status(401).json({error:"Utilizador não autenticado!!"});
-        window.location.href = "/login.html"; // Redireciona para a página de login
     }
 
 
@@ -425,7 +448,6 @@ app.get("/eleicoes/:id/resultados", async(req,res)=>{
 
     if (!req.session || !req.session.user || !req.session.user.email){
         return res.status(401).json({error:"Utilizador não autenticado!"});
-        window.location.href = "/login.html"; // Redireciona para a página de login
     }
 
     try{
@@ -479,7 +501,6 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
 
     if (!email || !password) {
         return res.status(400).json({ error: "Email e password são obrigatórios" });
-        window.location.href = "/login.html"; // Redireciona para a página de login
     }
 
     const user = await User.findOne({ email });
@@ -525,7 +546,6 @@ app.post("/verificar_password", async(req,res)=>{
 
     if (!email || !password) {
         return res.status(400).json({ error: "Email e password são obrigatórios" });
-        window.location.href = "/login.html"; // Redireciona para a página de login
     }
 
     const user = await User.findOne({ email });
@@ -583,7 +603,6 @@ app.get("/api/sessao-teste", (req, res) => {
 
     if (!req.session || !req.session.user || !req.session.user.email){
         return res.status(401).json({error:"Utilizador não autenticado!!"});
-        window.location.href = "/login.html"; // Redireciona para a página de login
     }
     if (req.session.user) {
         res.json({
@@ -599,7 +618,6 @@ app.get("/api/sessao-teste", (req, res) => {
 app.get("/eleicoes/:id/opcoes", async (req, res) => {
     if (!req.session || !req.session.user || !req.session.user.email){
         return res.status(401).json({error:"Utilizador não autenticado!!"});
-        window.location.href = "/login.html"; // Redireciona para a página de login
     }
     try {
         const eleicao = await Eleicao.findById(req.params.id);
@@ -663,7 +681,6 @@ app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obte
 
     if (!req.session || !req.session.user || !req.session.user.email){
         return res.status(401).json({error:"Utilizador não autenticado!!"});
-        window.location.href = "/login.html"; // Redireciona para a página de login
     }
     const { codigo } = req.params;
 
@@ -675,6 +692,12 @@ app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obte
         });
     }
 
+    if (Date.now() < new Date(eleicao.data_inicio).getTime()){
+        return res.status(403).json({
+            error: "A eleição ainda não começou",
+            data_inicio: eleicao.data_inicio
+        });
+    }
     return res.json(eleicao);
 });
 
@@ -682,7 +705,6 @@ app.get("/eleicoes", async (req, res) => {
 
     if (!req.session || !req.session.user || !req.session.user.email){
         return res.status(401).json({error:"Utilizador não autenticado!!"});
-        window.location.href = "/login.html"; // Redireciona para a página de login
     }
     
     try { 

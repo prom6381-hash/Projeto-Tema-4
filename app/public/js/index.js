@@ -179,6 +179,11 @@ async function ver_resultados() {
             estado1.textContent = estado;
             estado1.style.fontWeight = 'bold';
             cartao.appendChild(estado1);
+
+            const id_votacao = document.createElement('p');
+            id_votacao.textContent = `ID: ${eleicao.codigo}`;
+            id_votacao.style.fontWeight= 'bold';
+            cartao.appendChild(id_votacao);
             
             const eleicaobutao = document.createElement('button');
             eleicaobutao.textContent = 'Ver resultados da eleição';
