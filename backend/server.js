@@ -28,7 +28,6 @@ app.use(session({
 
 const connectDB = require("./base_de_dados.js");
 const { message } = require("statuses");
-const election = require("./models/election");
 const eleicaoEleitor = require("./models/eleicaoEleitor");
 const { json } = require("body-parser");
 connectDB();
@@ -165,9 +164,8 @@ app.post("/login", loginLimiter, async (req, res) => {
         return res.status(400).json({ error: "Email obrigatório" });
     }
 
-
-    
     const existingUser = await User.findOne({ email });
+    
     console.log("existingUser:", existingUser ? existingUser.email : "null");
 
     if (tokenType === "register") {
@@ -191,18 +189,24 @@ app.post("/login", loginLimiter, async (req, res) => {
         }
     }
 
+    const user = await User.findOne({ email });
+    if (!user) {
+        return res.status(404).json({ error: "Utilizador não encontrado" });
+    }
+
+
     // Gerar token
     const token = generateToken();
-    const tokenHash = hashToken(token, email);
+    const tokenHash = hashToken(token, user._id.toString());
     const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_TIME);
 
     await Token.findOneAndUpdate(
-        { email },
-        { tokenHash, expiresAt, tokenType },
+        { userId: user._id.toString() },
+        { tokenHash, expiresAt, tokenType, userId: user._id.toString() },
         { upsert: true, new: true }
     );
 
-    await sendTokenEmail(email, token);
+        await sendTokenEmail(email, token);
 
     return res.json({ message: "Token gerado e enviado" });
 });
@@ -229,8 +233,12 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
     if (!email || !token || !tokenType) {
         return res.status(400).json({ error: "Email e token são obrigatórios" });
     }
-    
-    const tokenData = await Token.findOne({ email });
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        return res.status(404).json({ error: "Utilizador não encontrado" });
+    }
+    const tokenData = await Token.findOne({ userId: user._id.toString() });
 
     
     if (!tokenData) {
@@ -264,7 +272,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
     
 
     // Verificar se o hash do token corresponde
-    const tokenHash = hashToken(token, email);
+    const tokenHash = hashToken(token, user._id.toString());
 
     if (tokenHash !== tokenData.tokenHash) {
         tokenData.attempts += 1;
@@ -644,13 +652,10 @@ app.post("/criar-eleicao", async(req,res)=>{
             return res.status(401).json({error:"O utilizador não está autenticado!"});
         }
         const {     nome,
-    candidatos,
-    data_inicio,
-    data_fim,
-    tipo,
-    emailsPermitidos,
-    dominiosPermitidos,
-    password} = req.body;
+            candidatos,
+            data_inicio,
+            data_fim,
+            privacidade} = req.body;
         if (!nome || !candidatos || !data_inicio || !data_fim) {
             return res.status(400).json({ error: "Dados incompletos ou não preenchidos!" });
         }
@@ -664,15 +669,24 @@ app.post("/criar-eleicao", async(req,res)=>{
                 codigoExiste = false;
             }
         }
+        const tipo = privacidade?.tipo || "publica";
+        const emailsPermitidos = privacidade?.emails || [];
+        const dominiosPermitidos = privacidade?.dominios || [];
+        const password = privacidade?.senha || null;
 
         const novaEleicao = new Eleicao({
             codigo,
             nome,
+            tipo,
+            emailsPermitidos,
+            dominiosPermitidos,
+            passwordHash: password,
             id_criador: req.session.user.id,    
             data_inicio,
             data_fim,
             opcoes: candidatos.map(candidato => ({ nome: candidato }))
         });
+
 
         await novaEleicao.save();
         return res.json({ message: "Eleição criada com sucesso", codigo });

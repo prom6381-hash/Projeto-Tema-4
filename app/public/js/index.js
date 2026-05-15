@@ -25,6 +25,16 @@ function remover_candidato() {
     }
 }
 
+function alternarCamposPrivacidade() {
+    const tipo = document.getElementById("tipo-privacidade").value;
+    const config = document.getElementById("configuracao-privada");
+
+    if (tipo === "privada") {
+        config.style.display = "block";
+    } else {
+        config.style.display = "none";
+    }
+}
 // - Botão Criar Eleição
 async function criar_eleicao() {
     const nomeEleicao = document.getElementById('nome-eleicao').value;
@@ -44,14 +54,16 @@ async function criar_eleicao() {
     if (candidatos.length === 0) {
         alert("Por favor, adicione pelo menos um candidato.");
         return;
+    }
 
     const data_inicio = document.getElementById('data-inicio').value;
+    const data_fim = document.getElementById('data-fim').value;
+
     if (data_inicio === "") {
         alert("Por favor, insira a data de início.");
         return;
     }
 
-    const data_fim = document.getElementById('data-fim').value;
     if (data_fim === "") {
         alert("Por favor, insira a data de fim.");
         return;
@@ -431,7 +443,7 @@ async function verificar_token() {
         } else if (tokenType === "vote") {
             window.location.href = "id_votacao.html";
         } else if (tokenType === "create") {
-            window.location.href = "criar_tipo_eleicao.html";
+            window.location.href = "criar_eleicao.html";
         }
 
     } else {
@@ -973,7 +985,7 @@ function remover_email() {
     if (elementos.length > 1) {
         lista.removeChild(elementos[elementos.length - 1]);
     } else {
-        alert("Não há domínios para remover.");
+        alert("Não há emails para remover.");
     }
 }
 
@@ -1152,4 +1164,4 @@ document.addEventListener("DOMContentLoaded", () => {
     
    //  const data = await response.json();
   //   console.log(data);
-   //  alert(data.message || data.error)
+  // alert(data.message || data.error)
