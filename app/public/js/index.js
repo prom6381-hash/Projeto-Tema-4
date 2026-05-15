@@ -1,5 +1,38 @@
 ///index.html 
 
+
+// NOTIFICAÇÕES BONITAS (substitui alert)
+
+
+function mostrarNotificacao(mensagem, tipo = "sucesso") {
+    const div = document.createElement("div");
+    div.textContent = mensagem;
+    div.className = `toast-notificacao toast-${tipo}`;
+    document.body.appendChild(div);
+    
+    // Remove após 3.5 segundos
+    setTimeout(() => {
+        div.style.opacity = "0";
+        div.style.transition = "opacity 0.3s ease";
+        setTimeout(() => div.remove(), 300);
+    }, 3500);
+}
+
+// Substitui alert() por notificações bonitas
+const alertOriginal = window.alert;
+window.alert = function(mensagem) {
+    // Para mensagens de erro, usa notificação vermelha
+    if (mensagem && (mensagem.toLowerCase().includes("erro") || 
+                     mensagem.toLowerCase().includes("inválid") ||
+                     mensagem.toLowerCase().includes("falhou") ||
+                     mensagem.toLowerCase().includes("não"))) {
+        mostrarNotificacao(mensagem, "erro");
+    } else {
+        mostrarNotificacao(mensagem, "sucesso");
+    }
+};
+
+
 //criar_eleicao.html
 
 // - Botão Adicionar Candidatos
@@ -140,7 +173,9 @@ async function criar_eleicao() {
             if (resposta.ok) {
                 alert(`Eleição criada! Código: ${data.codigo}`);
                 console.log("CODIGO DA ELEIÇÃO:", data.codigo);
-                window.location.href = "votar_ou_criar.html";
+                setTimeout(() => {   // isto dá tempo para ver a notificação do id da eleição
+                    window.location.href = "votar_ou_criar.html";
+                }, 5000);
             }  else {
                 alert(data.error);
             }
@@ -188,11 +223,8 @@ async function ver_resultados() {
         dados.forEach(eleicao => {
             
             const cartao = document.createElement('div');
+            cartao.className = 'eleicao-card';
             cartao.dataset.id = eleicao._id;
-            cartao.style.border = '1px solid #ccc';
-            cartao.style.padding = '15px';
-            cartao.style.margin = '10px 0';
-            cartao.style.borderRadius = '8px';
             
             const titulo = document.createElement('h3');
             titulo.textContent = eleicao.nome;
@@ -220,6 +252,13 @@ async function ver_resultados() {
             
             const estado1 = document.createElement('p');
             estado1.textContent = estado;
+            if (estado.includes("ativa")) {
+             estado1.className = "estado-ativa";
+            } else if (estado.includes("acabou") || estado.includes("encerrada")) {
+            estado1.className = "estado-encerrada";
+            } else {
+                estado1.className = "estado-pendente";
+                }
             estado1.style.fontWeight = 'bold';
             cartao.appendChild(estado1);
 
@@ -301,17 +340,18 @@ async function ver_uma_eleicao(id) {
             container.appendChild(linha);
             
             const barraFundo = document.createElement('div');
-            barraFundo.style.background = '#e0e0e0';
-            barraFundo.style.height = '24px';
-            barraFundo.style.borderRadius = '4px';
-            barraFundo.style.marginBottom = '15px';
+            barraFundo.className = 'barra-progresso-fundo';
             
             const barraPreenchida = document.createElement('div');
-            barraPreenchida.style.background = '#3498db';
-            barraPreenchida.style.height = '100%';
-            barraPreenchida.style.width = `${candidato.percentagem}%`;
-            barraPreenchida.style.borderRadius = '4px';
+            barraPreenchida.className = 'barra-progresso-preenchida';
+            barraPreenchida.textContent='0%';
             
+            // Animação de preenchimento
+            setTimeout(() => {
+                barraPreenchida.style.width = `${candidato.percentagem}%`;
+                barraPreenchida.textContent = `${candidato.percentagem}%`;
+            }, 100);
+
             barraFundo.appendChild(barraPreenchida);
             container.appendChild(barraFundo);
         });
@@ -755,6 +795,11 @@ async function votar(){
 
     const idOpcao = candidatoSelect.value;
     const idEleicao=localStorage.getItem("id_eleicao");
+
+    const botaoEnviar = document.getElementById("btn-enviar");
+    botaoEnviar.textContent = "A cifrar e enviar...";
+    botaoEnviar.style.background = "#f39c12";
+    botaoEnviar.disabled = true;    
     
     try{
         const chavesECDH= await gerarchavesDH();
