@@ -643,7 +643,14 @@ app.post("/criar-eleicao", async(req,res)=>{
         if (!req.session || !req.session.user || !req.session.user.email){
             return res.status(401).json({error:"O utilizador não está autenticado!"});
         }
-        const { nome, candidatos, data_inicio, data_fim, } = req.body;
+        const {     nome,
+    candidatos,
+    data_inicio,
+    data_fim,
+    tipo,
+    emailsPermitidos,
+    dominiosPermitidos,
+    password} = req.body;
         if (!nome || !candidatos || !data_inicio || !data_fim) {
             return res.status(400).json({ error: "Dados incompletos ou não preenchidos!" });
         }

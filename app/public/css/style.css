@@ -140,3 +140,27 @@ nav {
     border: 1px solid rgba(0, 0, 0, 0.3); 
 
 }
+
+.opcoes-eleicao {
+    display: flex;
+    justify-content: center;
+    gap: 60px; /* Espaço controlado entre as duas colunas */
+    width: 80%;
+    margin-bottom: 30px;
+}
+
+.coluna-opcao {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Alinha o botão e o texto verticalmente pelo centro */
+    text-align: center;
+}
+
+.btn-opcao {
+    width: 100%;
+    max-width: 200px;
+    padding: 20px;
+    font-size: 15px;
+    margin-bottom: 10px; /* Espaço entre o botão e o texto de descrição */
+}

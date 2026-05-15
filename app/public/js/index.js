@@ -400,7 +400,7 @@ async function verificar_token() {
         } else if (tokenType === "vote") {
             window.location.href = "id_votacao.html";
         } else if (tokenType === "create") {
-            window.location.href = "criar_eleicao.html";
+            window.location.href = "criar_tipo_eleicao.html";
         }
 
     } else {
@@ -870,6 +870,104 @@ async function mostraremailsessao() {
     }
 }
 
+
+function adicionar_dominio() {
+    const lista = document.getElementById('lista-dominios'); 
+
+    const novaDiv = document.createElement('div');
+    novaDiv.style.marginTop = "10px";
+    novaDiv.innerHTML = `
+        <input type="text" name="dominio" placeholder="@instituicao.pt">
+    `;
+    lista.appendChild(novaDiv);
+}
+
+function remover_dominio() {
+    const lista = document.getElementById('lista-dominios');
+    if (!lista) return;
+
+    const divs = lista.querySelectorAll('div');
+    
+    if (divs.length > 0) {
+        lista.removeChild(divs[divs.length - 1]);
+    } else {
+        alert("Não há domínios para remover.");
+    }
+}
+
+function verificar_existe_dominio() {
+    const inputsDominio = document.querySelectorAll('input[name="dominio"]');
+    
+    if (inputsDominio.length === 0 || inputsDominio[0].value.trim() === "") {
+        alert("Adicione pelo menos um domínio para prosseguir!");
+        return;
+    }
+    window.location.href = "criar_eleicao.html"
+
+}
+
+function adicionar_email() {
+    const lista = document.getElementById('lista-email'); 
+
+    const novaDiv = document.createElement('div');
+    novaDiv.className = "campo-email-container";
+    novaDiv.style.marginTop = "10px";
+    novaDiv.innerHTML = `
+        <input type="text" name="dominio" placeholder="XXXXX@instituicao.pt">
+    `;
+    lista.appendChild(novaDiv);
+}
+
+function remover_email() {
+    const lista = document.getElementById('lista-email');
+    if (!lista) return;
+
+    const elementos = lista.children;
+    
+    if (elementos.length > 1) {
+        lista.removeChild(elementos[elementos.length - 1]);
+    } else {
+        alert("Não há domínios para remover.");
+    }
+}
+
+function verificar_existe_email() {
+    const inputsDominio = document.querySelectorAll('input[name="email"]');
+    
+    if (inputsDominio.length === 0 || inputsDominio[0].value.trim() === "") {
+        alert("Adicione pelo menos um email para prosseguir!");
+        return;
+    }
+    window.location.href = "criar_eleicao.html"
+}
+
+
+
+
+
+async function importarFicheiro(input) {
+
+    if (!input.files || !input.files[0]) return;
+    const leitor = new FileReader();
+
+    leitor.onload = function(evento) {
+
+        const emails = evento.target.result.split(/\r?\n/).filter(line => line.trim());
+        
+        const container = document.getElementById('lista-email');
+        emails.forEach(email => {
+            // Injeta o input com a mesma estrutura para o remover_email() conseguir apagar depois
+            container.insertAdjacentHTML('beforeend', `
+                <div class="campo-email-container" style="margin-top: 10px;">
+                    <input type="text" name="email_eleicao" value="${email.trim()}">
+                </div>
+            `);
+        });
+    };
+
+
+    leitor.readAsText(input.files[0]);
+}
 if (window.location.pathname.includes("votar.html")) {
     document.addEventListener("DOMContentLoaded", carregar_eleicao);
 }

@@ -8,7 +8,19 @@ const eleicaoSchema  = new mongoose.Schema (
       unique: true,
       trim: true,
     },
+
+    tipo: {
+      type: String,
+      enum: ["publica", "privada"],
+      default: "publica"
+    },
     
+    emailsPermitidos: [String],
+
+    passwordHash: String,
+    saltPassword: String,
+    dominiosPermitidos: [String],
+
     nome: {
       type: String,
       required: true,
