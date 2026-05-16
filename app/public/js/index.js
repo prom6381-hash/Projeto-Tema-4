@@ -481,7 +481,7 @@ async function verificar_token() {
         } else if (tokenType === "login") {
             window.location.href = `verificar_senha.html?email=${encodeURIComponent(getQueryParams().email)}`;
         } else if (tokenType === "vote") {
-            window.location.href = "id_votacao.html";
+            window.location.href = "eleicao_publica_privada.html";
         } else if (tokenType === "create") {
             window.location.href = "criar_eleicao.html";
         }
@@ -1009,6 +1009,8 @@ function verificar_existe_dominio() {
 
 }
 
+
+
 function adicionar_email() {
     const lista = document.getElementById('lista-email'); 
 
@@ -1180,6 +1182,102 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+
+function irParaPublica() {
+    window.location.href = "votacoes_publicas.html";
+}
+
+function irParaPrivada() {
+    window.location.href = "id_votacao.html";
+}
+
+async function carregarEleicoesPublicas(pesquisa = "") {
+    const container = document.getElementById("lista-publicas");
+    if (!container) return;
+
+    container.innerHTML = "<p>A carregar...</p>";
+
+    try {
+        const url = pesquisa.trim()
+            ? `/eleicoes-publicas?q=${encodeURIComponent(pesquisa)}`
+            : "/eleicoes-publicas";
+
+        const resposta = await fetch(url, { credentials: "include" });
+
+        if (resposta.status === 401) {
+            container.innerHTML = '<p>Tens de ter sessão iniciada para ver as eleições.</p>';
+            return;
+        }
+
+        const eleicoes = await resposta.json();
+        container.innerHTML = "";
+
+        if (eleicoes.length === 0) {
+            container.innerHTML = "<p>Nenhuma eleição pública encontrada.</p>";
+            return;
+        }
+
+        eleicoes.forEach(eleicao => {
+            const agora = new Date();
+            const inicio = new Date(eleicao.data_inicio);
+            const fim = new Date(eleicao.data_fim);
+
+            let estadoTexto, estadoClasse;
+            if (agora >= inicio && agora <= fim) {
+                estadoTexto = "A decorrer";
+                estadoClasse = "estado-ativa";
+            } else if (agora < inicio) {
+                estadoTexto = "Ainda não começou";
+                estadoClasse = "estado-pendente";
+            } else {
+                estadoTexto = "Já terminou";
+                estadoClasse = "estado-encerrada";
+            }
+
+            const card = document.createElement("div");
+            card.className = "eleicao-card";
+
+            card.innerHTML = `
+                <h3>${eleicao.nome}</h3>
+                <p>Código: <strong>${eleicao.codigo}</strong></p>
+                <p>${new Date(eleicao.data_inicio).toLocaleDateString('pt-PT')} → ${new Date(eleicao.data_fim).toLocaleDateString('pt-PT')}</p>
+                <p class="${estadoClasse}" style="font-weight: bold;">${estadoTexto}</p>
+                <button class="Botão" onclick="irParaVotar('${eleicao.codigo}', '${eleicao._id}', '${eleicao.nome}')">Votar</button>
+            `;
+
+            container.appendChild(card);
+        });
+
+    } catch (erro) {
+        console.error(erro);
+        container.innerHTML = "<p style='color:red;'>Erro ao carregar eleições.</p>";
+    }
+}
+
+function irParaVotar(codigo, id, nome) {
+    localStorage.setItem("id_eleicao", id);
+    localStorage.setItem("nome_eleicao", nome);
+    window.location.href = `votar.html?id=${codigo}`;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Carrega eleições públicas se estiver na página certa
+    if (document.getElementById("lista-publicas")) {
+        carregarEleicoesPublicas();
+
+        const btnPesquisar = document.getElementById("btn-pesquisar");
+        const inputPesquisa = document.getElementById("pesquisa-eleicao");
+
+        btnPesquisar.addEventListener("click", () => {
+            carregarEleicoesPublicas(inputPesquisa.value);
+        });
+
+        // Pesquisa ao pressionar Enter
+        inputPesquisa.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") carregarEleicoesPublicas(inputPesquisa.value);
+        });
+    }
+});
 
 
 

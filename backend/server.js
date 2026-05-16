@@ -794,3 +794,26 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Servidor a correr na porta ${PORT}`);
 });
+
+app.get("/eleicoes-publicas", async (req, res) => {
+    if (!req.session || !req.session.user || !req.session.user.email) {
+        return res.status(401).json({ error: "Utilizador não autenticado!!" });
+    }
+
+    try {
+        const { q } = req.query;
+        const filtro = { tipo: "publica" };
+
+        if (q && q.trim() !== "") {
+            filtro.$or = [
+                { nome: { $regex: q, $options: "i" } },  // pesquisa por nome (case-insensitive)
+                { codigo: q.trim().toUpperCase() }         // pesquisa por código exato
+            ];
+        }
+
+        const eleicoes = await Eleicao.find(filtro);
+        return res.json(eleicoes);
+    } catch (error) {
+        return res.status(500).json({ error: "Erro ao buscar eleições públicas." });
+    }
+});
