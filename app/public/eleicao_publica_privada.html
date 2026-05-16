@@ -4,25 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
-    <title>Escolher tipo de Eleicao</title>
+    <title>Escolher tipo de Eleição</title>
 </head>
 <body>
+    <nav>
+        <a href="votar_ou_criar.html" class="nav-link">
+            <img src="imagens/logo.png" alt="Logo" class="logo">
+            <h1>VotoSeguro</h1>
+        </a>
+        <div class="sessao" id="mostraremailsessao"></div>
+    </nav>
 
-    <h1>Como deseja votar?</h1>
+    <div class="SelectVote">
+        <h1>Como deseja votar?</h1>
 
-    <div style="margin-top: 30px;">
-        <button onclick="irParaPublica()" class="Botão">
-            Votar em Eleição Pública
-        </button>
-    </div>
+        <div class="ListaVotos" style="display: flex; padding-left: 0;">
+            <button onclick="irParaPublica()" class="Botão" style="width: 300px; font-size: 24px; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                Eleição Pública
+            </button>
 
-    <div style="margin-top: 20px;">
-        <button onclick="irParaPrivada()" class="Botão">
-            Votar em Eleição Privada
-        </button>
+            <button onclick="irParaPrivada()" class="Botão" style="width: 300px; font-size: 24px; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                Eleição Privada
+            </button>
+        </div>
     </div>
 
     <script src="./js/index.js"></script>
 </body>
 </html>
-
