@@ -102,7 +102,7 @@ async function criar_eleicao() {
         return;
     }
 
-    const inicio = new Date(data_inicio);
+    const inicio = new Date(data_inicio).toISOString();
     const fim = new Date(data_fim);
 
     if (fim <= inicio) {
