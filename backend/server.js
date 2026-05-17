@@ -365,7 +365,11 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
         if (!user){
             return res.status(404).json({error:"Utilizador não foi encontrado!"});
         }
-
+        // Se não tiver chave RSA guardada, guarda a que veio do frontend
+        if (!user.chavePublicaRSA && req.body.chavePublicaRSA) {
+            user.chavePublicaRSA = req.body.chavePublicaRSA;
+            await user.save(); //Se a BD nao tem chave RSA, mas o browser enviou uma agora, guarda-a.
+        }
         if (!user.chavePublicaRSA){
             return res.status(400).json({error:"Não foi registado a chave RSA!"});
         }

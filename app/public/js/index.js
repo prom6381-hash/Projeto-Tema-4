@@ -826,10 +826,10 @@ async function votar(){
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                //email: email,    faço isto para testar 
                 chavepub_remota: chavesECDH.chavePublica,
-                assinatura: assinatura
-            })
+                assinatura: assinatura,
+                chavePublicaRSA: await crypto.subtle.exportKey("spki", chaveprivadaRSA).then(arrayBufferParaBase64) //gerar a chave priv para gerar a pub que verifica se existe ou n, para ser guardada na bd  
+            }) // faço isto por causa do erro ao votar quando apenas fazemos login e não o criar conta, pq ao criar guarda e usa sempre a mesma chave RSA em vez de criar uma nova no login
         });
 
         const dadosInicio= await respostaInicio.json();

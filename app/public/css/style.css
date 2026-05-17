@@ -141,7 +141,7 @@ nav {
 
 }
 
-<<<<<<< Updated upstream
+
 .opcoes-eleicao {
     display: flex;
     justify-content: center;
@@ -164,7 +164,7 @@ nav {
     padding: 20px;
     font-size: 15px;
     margin-bottom: 10px; /* Espaço entre o botão e o texto de descrição */
-=======
+}
 /* ANIMAÇÕES */
 
 @keyframes fadeIn {
@@ -340,5 +340,4 @@ nav {
         padding-left: 0;
         align-items: center;
     }
->>>>>>> Stashed changes
 }
