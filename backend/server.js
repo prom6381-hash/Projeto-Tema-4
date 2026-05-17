@@ -28,7 +28,6 @@ app.use(session({
 
 
 const connectDB = require("./base_de_dados.js");
-const { message } = require("/statuses");
 const eleicaoEleitor = require("./models/eleicaoEleitor");
 const { json } = require("body-parser");
 connectDB();
@@ -450,26 +449,23 @@ app.post("/api/votar", async(req,res)=>{
 
 
 
+            const email = req.session.user.email;
             const dominio = email.split("@")[1];
-            console.log("EMAIL SESSAO:", email);
-            console.log("EMAILS PERMITIDOS:", eleicao.emailsPermitidos);
-            console.log("DOMINIOS PERMITIDOS:", eleicao.dominiosPermitidos);
-            const permitidoEmail =
-                !eleicao.emailsPermitidos?.length ||
-                eleicao.emailsPermitidos.includes(email);
-            console.log("permitidoEmail:", permitidoEmail);
-            console.log("permitidoDominio:", permitidoDominio);
-            const permitidoDominio =
-                !eleicao.dominiosPermitidos?.length ||
-                eleicao.dominiosPermitidos.includes(dominio);
+            const semRegras =
+                (!eleicao.emailsPermitidos || eleicao.emailsPermitidos.length === 0) &&
+                (!eleicao.dominiosPermitidos || eleicao.dominiosPermitidos.length === 0);
 
-            if (!permitidoEmail && !permitidoDominio) {
+            const emailOk =
+                eleicao.emailsPermitidos?.includes(email);
+
+            const dominioOk =
+                eleicao.dominiosPermitidos?.includes(dominio);
+
+            if (!semRegras && !emailOk && !dominioOk) {
                 return res.status(403).json({
                     error: "Não tem permissão para votar nesta eleição"
                 });
             }
-
-
             const desencriptado= await desencriptarVoto(
                 sessao.chaveSessao,
                 AAD || idEleicao,
@@ -770,7 +766,6 @@ app.post("/criar-eleicao", async(req,res)=>{
 
 app.post("/verificar-eleicao-privada", async (req, res) => {
     try {
-        req.session.eleicoesAutorizadas ??= [];
 
         const {codigo, password} = req.body
 
@@ -815,9 +810,7 @@ app.post("/verificar-eleicao-privada", async (req, res) => {
         }
         
         
-        if (!req.session.eleicoesAutorizadas.includes(eleicao._id.toString())) {
-            req.session.eleicoesAutorizadas.push(eleicao._id.toString());
-        }
+
         return res.json({
             message: "Acesso autorizado"
 
@@ -861,10 +854,6 @@ console.log("AUTORIZADAS:", req.session.eleicoesAutorizadas);
     }
 
 
-    if (eleicao.tipo === "privada" && !req.session.eleicoesAutorizadas?.includes(eleicao._id.toString())) {
-        return   res.status(403).json({ error: "Acesso não autorizado"
-});
-    }
     return res.json({
         _id: eleicao._id,
         codigo: eleicao.codigo,
