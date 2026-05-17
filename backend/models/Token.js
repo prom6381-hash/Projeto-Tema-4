@@ -10,4 +10,9 @@ const TokenSchema = new mondoose.Schema({
     blockedUntil: { type: Date, default: null } 
 });
 
+TokenSchema.index(
+    { userId: 1, tokenType: 1 },
+    { unique: true }
+);
+
 module.exports = mondoose.model('Token', TokenSchema);

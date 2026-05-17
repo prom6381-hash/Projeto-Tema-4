@@ -22,12 +22,12 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false, maxAge: 1 * 60 * 60 * 1000 } // LEMBRAR DE COLOCAR TRUE QUANDO TIVERMOS HTTPS. funciona 1 hora
+    
 }));
 
 
 
 const connectDB = require("./base_de_dados.js");
-const { message } = require("statuses");
 const eleicaoEleitor = require("./models/eleicaoEleitor");
 const { json } = require("body-parser");
 connectDB();
@@ -41,6 +41,13 @@ const sessoesVotar={}; // armazenar temporariamente as sessões de votação a o
 
 
 // limitar por ip:
+const cors = require("cors");
+
+app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true
+}));
+
 
 const loginLimiter = rateLimit({
     windowMs: 5* 60 * 1000,
@@ -201,9 +208,20 @@ app.post("/login", loginLimiter, async (req, res) => {
     const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_TIME);
 
     await Token.findOneAndUpdate(
-        { userId: user._id.toString() },
-        { tokenHash, expiresAt, tokenType, userId: user._id.toString() },
-        { upsert: true, new: true }
+        {
+            userId: user._id.toString(),
+            tokenType
+        },
+        {
+            tokenHash,
+            expiresAt,
+            tokenType,
+            userId: user._id.toString()
+        },
+        {
+            upsert: true,
+            new: true
+        }
     );
 
         await sendTokenEmail(email, token);
@@ -238,7 +256,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
     if (!user) {
         return res.status(404).json({ error: "Utilizador não encontrado" });
     }
-    const tokenData = await Token.findOne({ userId: user._id.toString() });
+    const tokenData = await Token.findOne({ userId: user._id.toString(), tokenType});
 
     
     if (!tokenData) {
@@ -255,7 +273,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 
     // Verificar se o token ainda é válido
     if (Date.now() > tokenData.expiresAt) {
-        await Token.deleteOne({ email }); // deleteOne é um comando do mongoose
+        await Token.deleteOne({ userId: user._id.toString(), tokenType}); // deleteOne é um comando do mongoose
         return res.status(400).json({ error: "Token expirado" });
     }
 
@@ -347,7 +365,11 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
         if (!user){
             return res.status(404).json({error:"Utilizador não foi encontrado!"});
         }
-
+        // Se não tiver chave RSA guardada, guarda a que veio do frontend
+        if (!user.chavePublicaRSA && req.body.chavePublicaRSA) {
+            user.chavePublicaRSA = req.body.chavePublicaRSA;
+            await user.save(); //Se a BD nao tem chave RSA, mas o browser enviou uma agora, guarda-a.
+        }
         if (!user.chavePublicaRSA){
             return res.status(400).json({error:"Não foi registado a chave RSA!"});
         }
@@ -385,69 +407,99 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
 
 app.post("/api/votar", async(req,res)=>{
 
-    if (!req.session || !req.session.user || !req.session.user.email){
-        return res.status(401).json({error:"Utilizador não autenticado!!"});
-    }
-
-
-    try{
-        const {id_sessao,votoCifrado,iv,tag,AAD,idEleicao}= req.body;
-        if (!id_sessao || !votoCifrado || !iv || !tag || !AAD || !idEleicao){
-            return res.status(400).json({error:"Dados incompletos ou não preenchidos!"});
+        if (!req.session || !req.session.user || !req.session.user.email){
+            return res.status(401).json({error:"Utilizador não autenticado!!"});
         }
 
-        if (!sessoesVotar[id_sessao]){
-            return res.status(401).json({error:"A sessão é inválida ou expirou!"});
-        }
 
-        const sessao=sessoesVotar[id_sessao];
-        const email=sessao.email;
+        try{
+            const {id_sessao,votoCifrado,iv,tag,AAD,idEleicao}= req.body;
+            if (!id_sessao || !votoCifrado || !iv || !tag || !AAD || !idEleicao){
+                return res.status(400).json({error:"Dados incompletos ou não preenchidos!"});
+            }
 
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ error: "Utilizador não encontrado!" });
-        }
+            const email = req.session.user.email;
 
-        const jaVotou = await EleicaoEleitor.findOne({
-            id_eleicao: idEleicao,
-            id_utilizador: user._id
-        });
+            const user = await User.findOne({ email });
 
-        if (jaVotou && jaVotou.votou) {
+            if (!user) {
+                return res.status(404).json({ error: "Utilizador não encontrado!" });
+            }
+
+            const sessao = sessoesVotar[id_sessao];
+
+            if (!sessao) {
+                return res.status(401).json({ error: "A sessão é inválida ou expirou!" });
+            }
+
+
+            const eleicao = await Eleicao.findById(idEleicao);
+
+            if (!eleicao) {
+                return res.status(404).json({ error: "Eleição não encontrada" });
+            }
+
+
+            const jaVotou = await EleicaoEleitor.findOne({
+                id_eleicao: idEleicao,
+                id_utilizador: user._id
+            });
+
+            if (jaVotou && jaVotou.votou) {
+                delete sessoesVotar[id_sessao];
+                return res.status(400).json({ error: "Já votou nesta eleição!" });
+            }
+
+
+
+
+            const email = req.session.user.email;
+            const dominio = email.split("@")[1];
+            const semRegras =
+                (!eleicao.emailsPermitidos || eleicao.emailsPermitidos.length === 0) &&
+                (!eleicao.dominiosPermitidos || eleicao.dominiosPermitidos.length === 0);
+
+            const emailOk =
+                eleicao.emailsPermitidos?.includes(email);
+
+            const dominioOk =
+                eleicao.dominiosPermitidos?.includes(dominio);
+
+            if (!semRegras && !emailOk && !dominioOk) {
+                return res.status(403).json({
+                    error: "Não tem permissão para votar nesta eleição"
+                });
+            }
+            const desencriptado= await desencriptarVoto(
+                sessao.chaveSessao,
+                AAD || idEleicao,
+                iv,
+                votoCifrado,
+                tag
+            );
+
+            const idOpcao= desencriptado.voto;
+
+            const guardarVoto= new Voto({
+                id_eleicao: idEleicao,
+                id_opcao: idOpcao
+            });
+            await guardarVoto.save();
+
+            await EleicaoEleitor.findOneAndUpdate(
+                { id_eleicao: idEleicao, id_utilizador: user._id },
+                { votou: true },
+                { upsert: true, new: true }
+            );
+
             delete sessoesVotar[id_sessao];
-            return res.status(400).json({ error: "Já votou nesta eleição!" });
+            return res.json({ message: "O voto foi corretamente registado!"});
+
+        } catch(erro){
+            console.error("Houve um erro ao votar, que foi:", erro);
+            return res.status(500).json({error: "Houve um erro interno ao tentar registar o voto!"})
         }
-
-        const desencriptado= await desencriptarVoto(
-            sessao.chaveSessao,
-            AAD || idEleicao,
-            iv,
-            votoCifrado,
-            tag
-        );
-
-        const idOpcao= desencriptado.voto;
-
-        const guardarVoto= new Voto({
-            id_eleicao: idEleicao,
-            id_opcao: idOpcao
-        });
-        await guardarVoto.save();
-
-        await EleicaoEleitor.findOneAndUpdate(
-            { id_eleicao: idEleicao, id_utilizador: user._id },
-            { votou: true },
-            { upsert: true, new: true }
-        );
-
-        delete sessoesVotar[id_sessao];
-        return res.json({ message: "O voto foi corretamente registado!"});
-
-    } catch(erro){
-        console.error("Houve um erro ao votar, que foi:", erro);
-        return res.status(500).json({error: "Houve um erro interno ao tentar registar o voto!"})
-    }
-})
+    })
 
 
 // FAZER a parte que corre resultados de eleições
@@ -674,13 +726,32 @@ app.post("/criar-eleicao", async(req,res)=>{
         const dominiosPermitidos = privacidade?.dominios || [];
         const password = privacidade?.senha || null;
 
+        let passwordHash = null;
+        let salt = null;
+
+        if (tipo === "privada" && password) {
+
+            const response = await fetch("http://servidor-ca:5000/hash-password", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ password })
+            });
+
+            const data = await response.json();
+
+            passwordHash = data.hash;
+            salt = data.salt;
+        }
         const novaEleicao = new Eleicao({
             codigo,
             nome,
             tipo,
             emailsPermitidos,
             dominiosPermitidos,
-            passwordHash: password,
+            passwordHash,
+            salt,
             id_criador: req.session.user.id,    
             data_inicio,
             data_fim,
@@ -697,9 +768,69 @@ app.post("/criar-eleicao", async(req,res)=>{
     }
 });
 
+app.post("/verificar-eleicao-privada", async (req, res) => {
+    try {
 
+        const {codigo, password} = req.body
+
+        if (!codigo || !password) {
+            return res.status(400).json({error: "Dados em falta"
+        })
+        }
+    
+
+        const eleicao = await Eleicao.findOne({ codigo })
+
+        if (!eleicao) {
+            return res.status(404).json({
+                error: "Eleição não encontrada"
+                });
+            }
+
+        if (eleicao.tipo !== "privada") {
+            return res.status(400).json({
+                error: "A eleição não é privada"
+            });
+        }
+
+        const response = await fetch("http://servidor-ca:5000/verify-password", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                password,
+                salt: eleicao.salt,
+                hash: eleicao.passwordHash
+            })
+        });
+
+        const data = await response.json();
+        
+        if (!data.valid) {
+            return res.status(401).json({
+                error: "Password inválida"
+            });
+        }
+        
+        
+
+        return res.json({
+            message: "Acesso autorizado"
+
+        });
+
+    } catch (erro) {
+        console.error("Erro ao verificar eleição privada:", erro);
+        return res.status(500).json({
+            error: "Erro interno"
+        });
+    }
+});
 app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obter os dados da eleição, e não criar ou modificar nada
 
+
+    
     if (!req.session || !req.session.user || !req.session.user.email){
         return res.status(401).json({error:"Utilizador não autenticado!!"});
     }
@@ -712,14 +843,30 @@ app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obte
             error: "Eleição não encontrada"
         });
     }
+    const agora = new Date();
 
-    if (Date.now() < new Date(eleicao.data_inicio).getTime()){
+    const inicio = new Date(eleicao.data_inicio).getTime();
+    console.log("ELEIÇÃO:", eleicao);
+console.log("TIPO:", eleicao.tipo);
+console.log("DATA INICIO:", eleicao.data_inicio);
+console.log("AUTORIZADAS:", req.session.eleicoesAutorizadas);
+    if (agora < new Date(eleicao.data_inicio)) {
         return res.status(403).json({
             error: "A eleição ainda não começou",
             data_inicio: eleicao.data_inicio
         });
     }
-    return res.json(eleicao);
+
+
+    return res.json({
+        _id: eleicao._id,
+        codigo: eleicao.codigo,
+        nome: eleicao.nome,
+        tipo: eleicao.tipo,
+        data_inicio: eleicao.data_inicio,
+        data_fim: eleicao.data_fim,
+        opcoes: eleicao.opcoes
+    }); //isto, para não devolver para o front end o a palavra passe nem salt
 });
 
 app.get("/eleicoes", async (req, res) => {
@@ -730,7 +877,7 @@ app.get("/eleicoes", async (req, res) => {
     
     try { 
         const user = req.session.user.id;
-        const eleicoes = await election.find( {id_criador: user});
+        const eleicoes = await Eleicao.find( {id_criador: user});
         return res.json(eleicoes);
     } catch (error) {
         console.error("Erro ao criar a eleição:", error);
@@ -744,7 +891,15 @@ app.get("/eleicoes", async (req, res) => {
 app.get("/eleicoes/codigo/:codigo", async (req, res) => {
     const eleicao = await Eleicao.findOne({ codigo: req.params.codigo });
     if (!eleicao) return res.status(404).json({ error: "Eleição não encontrada" });
-    res.json(eleicao);
+    return res.json({
+        _id: eleicao._id,
+        codigo: eleicao.codigo,
+        nome: eleicao.nome,
+        tipo: eleicao.tipo,
+        data_inicio: eleicao.data_inicio,
+        data_fim: eleicao.data_fim,
+        opcoes: eleicao.opcoes
+    });  //para nao devolver ao front end a palavra passe
 });
 
 app.post("/guardar-chave-rsa",async (req,res)=>{

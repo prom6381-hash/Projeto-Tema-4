@@ -628,6 +628,7 @@ async function id_votacao() {
 
     const response = await fetch (`/eleicoes/${idInput}`, {
         method: "GET",
+        credentials: "include",
         headers: {
             "Content-Type": "application/json"
         },
@@ -825,10 +826,10 @@ async function votar(){
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                //email: email,    faço isto para testar 
                 chavepub_remota: chavesECDH.chavePublica,
-                assinatura: assinatura
-            })
+                assinatura: assinatura,
+                chavePublicaRSA: await crypto.subtle.exportKey("spki", chaveprivadaRSA).then(arrayBufferParaBase64) //gerar a chave priv para gerar a pub que verifica se existe ou n, para ser guardada na bd  
+            }) // faço isto por causa do erro ao votar quando apenas fazemos login e não o criar conta, pq ao criar guarda e usa sempre a mesma chave RSA em vez de criar uma nova no login
         });
 
         const dadosInicio= await respostaInicio.json();
@@ -858,6 +859,7 @@ async function votar(){
 
         const respostaVoto= await fetch("/api/votar", {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 id_sessao: dadosInicio.id_sessao,
@@ -1209,7 +1211,7 @@ async function carregarEleicoesPublicas(pesquisa = "") {
             return;
         }
 
-        const eleicoes = await resposta.json();
+        let  eleicoes = await resposta.json(); //tem de set let para usar filter
         container.innerHTML = "";
 
         if (eleicoes.length === 0) {
@@ -1217,12 +1219,67 @@ async function carregarEleicoesPublicas(pesquisa = "") {
             return;
         }
 
-        eleicoes.forEach(eleicao => {
-            const agora = new Date();
+        const filtroEstado =
+            document.getElementById("filtro-estado").value;
+
+        const ordenacao =
+            document.getElementById("ordenacao-eleicao").value;
+
+        const agora = new Date();
+
+
+        eleicoes = eleicoes.filter(eleicao => {
+
             const inicio = new Date(eleicao.data_inicio);
             const fim = new Date(eleicao.data_fim);
+            
+            if (filtroEstado === "ativas") {
+                return agora >= inicio && agora <= fim;
+            } 
 
-            let estadoTexto, estadoClasse;
+            if (filtroEstado === "futuras") {
+                return agora < inicio;
+            }
+
+            if (filtroEstado === "terminadas") {
+                return agora > fim;
+            }
+
+            return true;
+        });
+
+        if (ordenacao === "recentes") {
+            eleicoes.sort((a,b) =>
+                new Date(b.data_inicio) - new Date(a.data_inicio)
+        );} else if (ordenacao === "terminar") {
+                eleicoes.sort((a,b) =>
+                new Date(a.data_fim) -
+                new Date(b.data_fim)
+            ); 
+            } else if (ordenacao === "alfabetica") {
+            eleicoes.sort((a,b) =>
+                a.nome.localeCompare(b.nome)
+            );
+        }
+
+        container.innerHTML = "";
+
+        if (eleicoes.length === 0) {
+
+            container.innerHTML =
+                "<p>Nenhuma eleição encontrada.</p>";
+
+            return;
+        }
+
+        eleicoes.forEach(eleicao => {
+            const agora = new Date();
+
+            const inicio =new Date(eleicao.data_inicio);
+
+            const fim = new Date(eleicao.data_fim);
+            let estadoTexto;
+            let estadoClasse;
             if (agora >= inicio && agora <= fim) {
                 estadoTexto = "A decorrer";
                 estadoClasse = "estado-ativa";
