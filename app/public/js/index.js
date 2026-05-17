@@ -102,7 +102,7 @@ async function criar_eleicao() {
         return;
     }
 
-    const inicio = new Date(data_inicio).toISOString();
+    const inicio = new Date(data_inicio);
     const fim = new Date(data_fim);
 
     if (fim <= inicio) {
@@ -628,6 +628,7 @@ async function id_votacao() {
 
     const response = await fetch (`/eleicoes/${idInput}`, {
         method: "GET",
+        credentials: "include",
         headers: {
             "Content-Type": "application/json"
         },
@@ -858,6 +859,7 @@ async function votar(){
 
         const respostaVoto= await fetch("/api/votar", {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 id_sessao: dadosInicio.id_sessao,

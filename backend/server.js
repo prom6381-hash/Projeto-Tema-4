@@ -28,7 +28,7 @@ app.use(session({
 
 
 const connectDB = require("./base_de_dados.js");
-const { message } = require("statuses");
+const { message } = require("/statuses");
 const eleicaoEleitor = require("./models/eleicaoEleitor");
 const { json } = require("body-parser");
 connectDB();
@@ -42,6 +42,13 @@ const sessoesVotar={}; // armazenar temporariamente as sessões de votação a o
 
 
 // limitar por ip:
+const cors = require("cors");
+
+app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true
+}));
+
 
 const loginLimiter = rateLimit({
     windowMs: 5* 60 * 1000,
@@ -444,11 +451,14 @@ app.post("/api/votar", async(req,res)=>{
 
 
             const dominio = email.split("@")[1];
-            
+            console.log("EMAIL SESSAO:", email);
+            console.log("EMAILS PERMITIDOS:", eleicao.emailsPermitidos);
+            console.log("DOMINIOS PERMITIDOS:", eleicao.dominiosPermitidos);
             const permitidoEmail =
                 !eleicao.emailsPermitidos?.length ||
                 eleicao.emailsPermitidos.includes(email);
-
+            console.log("permitidoEmail:", permitidoEmail);
+            console.log("permitidoDominio:", permitidoDominio);
             const permitidoDominio =
                 !eleicao.dominiosPermitidos?.length ||
                 eleicao.dominiosPermitidos.includes(dominio);
@@ -822,6 +832,8 @@ app.post("/verificar-eleicao-privada", async (req, res) => {
 });
 app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obter os dados da eleição, e não criar ou modificar nada
 
+
+    
     if (!req.session || !req.session.user || !req.session.user.email){
         return res.status(401).json({error:"Utilizador não autenticado!!"});
     }
@@ -837,7 +849,10 @@ app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obte
     const agora = new Date();
 
     const inicio = new Date(eleicao.data_inicio).getTime();
-
+    console.log("ELEIÇÃO:", eleicao);
+console.log("TIPO:", eleicao.tipo);
+console.log("DATA INICIO:", eleicao.data_inicio);
+console.log("AUTORIZADAS:", req.session.eleicoesAutorizadas);
     if (agora < new Date(eleicao.data_inicio)) {
         return res.status(403).json({
             error: "A eleição ainda não começou",
