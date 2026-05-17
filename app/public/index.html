@@ -1,33 +1,48 @@
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
-    <title>Página Inicial</title>
+    <title>VotoSeguro — Bem-vindo</title>
 </head>
 <body>
-
-
-        <nav>
-            <a class="nav-link">
-                <img src="imagens/logo.png" alt="Logo" class="logo">
-                <h1>VotoSeguro</h1>
-            </a>
-            <div class="sessao" id="mostraremailsessao"></div>
-        </nav>    
-
-    <div class="PgInicial">
-        <h2>Sistema de votação eletrónica</h2>
-        <p style="font-size: 20px">Autenticação</p> 
-        <img src="imagens/logo.png" alt="Logo" id="logo" style="width: 170px;">
-
-        <a class="Botão" style="padding: 20px; font-size: 20px;" href="enviar_token_register.html">Registar-se</a>
-
-        <a href="enviar_token_login.html">
-            <p class="iniciarS" style="cursor: pointer;">Iniciar Sessão</p>
+ 
+    <nav>
+        <a class="nav-link">
+            <img src="imagens/logo.png" alt="Logo" class="logo">
+            <h1>VotoSeguro</h1>
         </a>
-        <p style="font-size: 12px; margin-top: 5px">A ligação é segura por HTTPS/TLS</p>
-    </div>  
+        <div class="sessao" id="mostraremailsessao"></div>
+    </nav>
+ 
+    <div class="PgInicial" style="gap: 0;">
+        <img src="imagens/logo.png" alt="Logo VotoSeguro" style="width: 88px; margin-bottom: 20px; opacity: 0.92;">
+ 
+        <h2 style="margin-bottom: 6px;">VotoSeguro</h2>
+        <p style="font-size: 0.88rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--indigo); font-weight: 600; margin-bottom: 4px;">
+            Sistema de Votação Eletrónica
+        </p>
+        <p style="margin-bottom: 32px; margin-top: 10px;">
+            Aceda à plataforma para participar em eleições de forma segura e verificável.
+        </p>
+ 
+        <a class="Botão" style="width: 100%; padding: 14px; font-size: 1rem; justify-content: center;" href="enviar_token_register.html">
+            Registar-se
+        </a>
+ 
+        <a href="enviar_token_login.html" style="margin-top: 16px;">
+            <p class="iniciarS">Já tenho conta — Iniciar Sessão</p>
+        </a>
+ 
+        <div style="margin-top: 28px; display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.78rem;">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="7" width="12" height="8" rx="2" stroke="#6B7A99" stroke-width="1.5"/>
+                <path d="M5 7V5a3 3 0 016 0v2" stroke="#6B7A99" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Ligação protegida por HTTPS/TLS
+        </div>
+    </div>
+ 
     <script src="./js/index.js"></script>
 </body>
 </html>

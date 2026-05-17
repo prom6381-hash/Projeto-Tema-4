@@ -1,28 +1,41 @@
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
-    <title>Enviar Token</title>
+    <title>VotoSeguro — Aceder à Votação</title>
 </head>
 <body>
 
-
-        <nav>
-            <a href="votar_ou_criar.html" class="nav-link">
-                <img src="imagens/logo.png" alt="Logo" class="logo">
-                <h1>VotoSeguro</h1>
-            </a>
-            <div class="sessao" id="mostraremailsessao"></div>
-        </nav>    
-
+    <nav>
+        <a href="votar_ou_criar.html" class="nav-link">
+            <img src="imagens/logo.png" alt="Logo" class="logo">
+            <h1>VotoSeguro</h1>
+        </a>
+        <div class="sessao" id="mostraremailsessao"></div>
+    </nav>
 
     <div class="PgInicial">
-        <h2>Digite o ID da votação:</h2>
-        <input type="text" id="id-votacao" placeholder="ID da votação">
-        <input type="text" id="senha-votacao" placeholder="Palavra-passe da votação">
-        <button class="Botão" onclick="id_votacao()">Votar</button>
+        <div class="token-icon">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="6" width="26" height="20" rx="3" stroke="#4A56A6" stroke-width="2"/>
+                <path d="M9 16l4 4 10-8" stroke="#4A56A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <h2>Aceder à Votação</h2>
+        <p>Introduza o ID e, se aplicável, a palavra-passe da votação em que pretende participar.</p>
+
+        <label class="field-label" for="id-votacao">ID da Votação</label>
+        <input type="text" id="id-votacao" placeholder="Ex: VOT-2025-001">
+
+        <label class="field-label" for="senha-votacao">Palavra-passe da Votação</label>
+        <input type="text" id="senha-votacao" placeholder="Deixe vazio se for pública" style="margin-bottom: 16px;">
+
+        <button class="Botão" onclick="id_votacao()" style="width: 100%; padding: 14px; font-size: 1rem;">
+            Entrar na Votação
+        </button>
     </div>
+
     <script src="./js/index.js"></script>
 </body>
 </html>

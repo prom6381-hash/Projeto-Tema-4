@@ -1,33 +1,63 @@
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
-    <title>Resultados</title>
+    <title>VotoSeguro — Resultados</title>
 </head>
 <body>
-    
-        <nav>
-            <a href="votar_ou_criar.html" class="nav-link">
-                <img src="imagens/logo.png" alt="Logo" class="logo">
-                <h1>VotoSeguro</h1>
-            </a>
-            <div class="sessao" id="mostraremailsessao"></div>
-        </nav>    
-
-    <div class="PgInicial">
-
-        <div id="resultados-container"></div><br>
-
-        <div  id="resultados"></div><br>
-
-        <div id="bloco2">
-            <h2>Observa as eleições atualmente ativas</h2>
-            <button onclick="ver_resultados()" id="ver_eleicao" class="Botão" type="button" style="padding: 15px; font-size: 20px;">Eleições ativas</button>
+ 
+    <nav>
+        <a href="votar_ou_criar.html" class="nav-link">
+            <img src="imagens/logo.png" alt="Logo" class="logo">
+            <h1>VotoSeguro</h1>
+        </a>
+        <div class="sessao" id="mostraremailsessao"></div>
+    </nav>
+ 
+    <div class="resultados-wrapper">
+ 
+        <!-- Cabeçalho da página -->
+        <div class="resultados-header">
+            <div class="token-icon" style="margin-bottom: 0;">
+                <svg width="30" height="30" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="18" width="6" height="11" rx="1.5" fill="#4A56A6"/>
+                    <rect x="13" y="11" width="6" height="18" rx="1.5" fill="#4A56A6"/>
+                    <rect x="23" y="4" width="6" height="25" rx="1.5" fill="#4A56A6"/>
+                </svg>
+            </div>
+            <div>
+                <h1>Resultados</h1>
+                <p>Consulte os resultados das eleições encerradas e as eleições atualmente ativas.</p>
+            </div>
         </div>
+ 
+        <!-- Área preenchida pelo JS: resultados de eleição específica -->
+        <div id="resultados-container"></div>
+ 
+        <!-- Área preenchida pelo JS: lista de eleições/candidatos -->
+        <div id="resultados"></div>
+ 
+        <!-- Bloco inicial: ver eleições ativas -->
+        <div id="bloco2" class="resultados-card-inicial">
+            <div class="token-icon" style="width: 52px; height: 52px;">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="16" cy="16" r="12" stroke="#4A56A6" stroke-width="2"/>
+                    <path d="M16 10v6l4 2" stroke="#4A56A6" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h2>Eleições em curso</h2>
+            <p>Consulte todas as eleições que estão atualmente a decorrer.</p>
+            <button onclick="ver_resultados()" id="ver_eleicao" class="Botão" type="button" style="padding: 12px 28px; font-size: 0.95rem;">
+                Ver eleições ativas
+            </button>
+        </div>
+ 
+        <!-- Bloco de recarregar (preenchido pelo JS) -->
         <div id="bloco-recarregar"></div>
-
+ 
     </div>
+ 
     <script src="./js/index.js"></script>
 </body>
 </html>

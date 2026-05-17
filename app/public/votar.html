@@ -1,33 +1,71 @@
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
-    <title>Voto</title>
+    <title>VotoSeguro — Voto</title>
 </head>
 <body>
-    
-        <nav>
-            <a href="votar_ou_criar.html" class="nav-link">
-                <img src="imagens/logo.png" alt="Logo" class="logo">
-                <h1>VotoSeguro</h1>
-            </a>
-            <div class="sessao" id="mostraremailsessao"></div>
-        </nav>    
 
-    <div class="SelectVote">
-        <h1 id="titulo-eleicao">Carregando...</h1>
+    <nav>
+        <a href="votar_ou_criar.html" class="nav-link">
+            <img src="imagens/logo.png" alt="Logo" class="logo">
+            <h1>VotoSeguro</h1>
+        </a>
+        <div class="sessao" id="mostraremailsessao"></div>
+    </nav>
 
-        <div class="ListaVotos">
-            <div id="candidatos"></div> 
+    <div class="votar-wrapper">
+
+        <!-- Cabeçalho da eleição -->
+        <div class="votar-header">
+            <div class="token-icon" style="margin-bottom: 0; flex-shrink: 0;">
+                <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="5" width="26" height="22" rx="3" stroke="#4A56A6" stroke-width="2"/>
+                    <path d="M9 16l4 4 10-9" stroke="#4A56A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div>
+                <p style="font-size:0.78rem; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; color:var(--indigo); margin-bottom:4px;">Eleição em curso</p>
+                <h1 id="titulo-eleicao">A carregar...</h1>
+            </div>
         </div>
-            <div class="SelectVote2" id="confirmacao">
-                <h3 style="margin-top: 0px;">Confirmar Escolha:</h3>
-                <p id="voto-selecionado">Nenhum selecionado</p>
-                <button id="btn-enviar" class="Botão" style="padding: 10px; margin-top: 5px;" onclick="votar()">Cifrar voto e enviar</button>
 
-        </div> 
+        <!-- Área principal: candidatos + confirmação -->
+        <div class="votar-body">
+
+            <!-- Candidatos injetados pelo JS -->
+            <div class="votar-candidatos">
+                <p class="field-label" style="margin-top:0;">Selecione o seu candidato</p>
+                <div id="candidatos" class="candidatos-lista"></div>
+            </div>
+
+            <!-- Painel de confirmação -->
+            <div class="votar-confirmacao" id="confirmacao">
+                <div class="confirmacao-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2a5 5 0 100 10A5 5 0 0012 2zM4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="#4A56A6" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h3>Confirmar escolha</h3>
+                <div class="confirmacao-voto-box">
+                    <p id="voto-selecionado">Nenhum candidato selecionado</p>
+                </div>
+                <button id="btn-enviar" class="Botão" onclick="votar()" style="width:100%; padding:13px; font-size:0.95rem; margin-top:4px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="11" width="18" height="11" rx="2" stroke="white" stroke-width="2"/>
+                        <path d="M7 11V7a5 5 0 0110 0v4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Cifrar e enviar voto
+                </button>
+                <p style="font-size:0.73rem; color:var(--text-muted); text-align:center; line-height:1.5; margin-top:10px;">
+                    O seu voto será cifrado antes de ser transmitido.
+                </p>
+            </div>
+
+        </div>
     </div>
+
     <script src="./js/index.js"></script>
 </body>
 </html>

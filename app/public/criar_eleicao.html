@@ -1,91 +1,101 @@
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
-    <title>Criar Eleição</title>
+    <title>VotoSeguro — Criar Eleição</title>
 </head>
 <body>
 
-        <nav>
-            <a href="votar_ou_criar.html" class="nav-link">
-                <img src="imagens/logo.png" alt="Logo" class="logo">
-                <h1>VotoSeguro</h1>
-            </a>
-            <div class="sessao" id="mostraremailsessao"></div>
-        </nav>    
+    <nav>
+        <a href="votar_ou_criar.html" class="nav-link">
+            <img src="imagens/logo.png" alt="Logo" class="logo">
+            <h1>VotoSeguro</h1>
+        </a>
+        <div class="sessao" id="mostraremailsessao"></div>
+    </nav>
+
     <div class="eleição">
         <h1>Criar Eleição</h1>
-    
-        <div>
-            <p>Nome da Eleição</p>
-            <input type="text" id="nome-eleicao">
+
+        <!-- Nome da eleição -->
+        <div style="width: 100%;">
+            <label class="field-label" for="nome-eleicao">Nome da Eleição</label>
+            <input type="text" id="nome-eleicao" placeholder="Ex: Eleição da Associação de Estudantes 2025">
         </div>
-        
-        <div style="margin-top: 15px;">
-            <p>Tipo de Eleição</p>
-            <select id="tipo-privacidade" onchange="alternarCamposPrivacidade()" style="padding: 10px; border-radius: 10px; font-size: 16px; width: 100%; max-width: 300px;">
+
+        <!-- Tipo de eleição -->
+        <div style="width: 100%; margin-top: 8px;">
+            <label class="field-label" for="tipo-privacidade">Tipo de Eleição</label>
+            <select id="tipo-privacidade" onchange="alternarCamposPrivacidade()">
                 <option value="publica">Pública</option>
                 <option value="privada">Privada</option>
             </select>
         </div>
 
-        <div id="configuracao-privada" style="display: none; width: 100%; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
+        <!-- Configuração privada -->
+        <div id="configuracao-privada" style="display: none; width: 100%;" class="form-section">
             <h3>Configuração de Acesso Privado</h3>
-            
-            <p>Palavra-passe da Eleição</p>
-            <input type="password" id="senha-eleicao" placeholder="Digite a senha para os votantes">
 
-            <div style="display: flex; gap: 40px; margin-top: 15px;">
-                <div style="flex: 1;">
-                    <p>Domínios Autorizados</p>
+            <label class="field-label" for="senha-eleicao">Palavra-passe da Eleição</label>
+            <input type="password" id="senha-eleicao" placeholder="Senha para os votantes">
+
+            <div style="display: flex; gap: 32px; margin-top: 16px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label class="field-label">Domínios Autorizados</label>
                     <div id="lista-dominios">
                         <div><input type="text" name="dominio" placeholder="@instituicao.pt"></div>
                     </div>
-                    <div style="display: flex; gap: 5px; margin-top: 5px;">
-                        <button class="Botão" style="padding: 8px; font-size: 12px;" onclick="adicionar_dominio()">+ Domínio</button>
-                        <button class="Botão" style="padding: 8px; font-size: 12px;" onclick="remover_dominio()">- Domínio</button>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="Botão" style="padding: 8px 14px; font-size: 0.82rem;" onclick="adicionar_dominio()">+ Domínio</button>
+                        <button class="Botão" style="padding: 8px 14px; font-size: 0.82rem; background: var(--navy-light);" onclick="remover_dominio()">− Domínio</button>
                     </div>
                 </div>
 
-                <div style="flex: 1;">
-                    <p>E-mails Autorizados</p>
+                <div style="flex: 1; min-width: 200px;">
+                    <label class="field-label">E-mails Autorizados</label>
                     <div id="lista-email">
                         <div class="campo-email-container"><input type="text" name="email_eleicao" placeholder="user@instituicao.pt"></div>
                     </div>
-                    <div style="display: flex; gap: 5px; margin-top: 5px;">
-                        <button class="Botão" style="padding: 8px; font-size: 12px;" onclick="adicionar_email()">+ E-mail</button>
-                        <button class="Botão" style="padding: 8px; font-size: 12px;" onclick="remover_email()">- E-mail</button>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="Botão" style="padding: 8px 14px; font-size: 0.82rem;" onclick="adicionar_email()">+ E-mail</button>
+                        <button class="Botão" style="padding: 8px 14px; font-size: 0.82rem; background: var(--navy-light);" onclick="remover_email()">− E-mail</button>
                     </div>
-                    <input type="file" accept=".txt" onchange="importarFicheiro(this)" style="margin-top: 10px; font-size: 12px;">
+                    <input type="file" accept=".txt" onchange="importarFicheiro(this)" style="margin-top: 12px; font-size: 0.82rem; color: var(--text-muted);">
                 </div>
             </div>
         </div>
 
-        <div style="display: flex; gap: 160px; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
-            <div style="flex:1;">
+        <!-- Candidatos e datas -->
+        <div class="form-section" style="display: flex; gap: 40px; flex-wrap: wrap;">
+            <!-- Candidatos -->
+            <div style="flex: 1; min-width: 220px;">
+                <h3>Candidatos</h3>
                 <div id="lista-candidatos">
-                    <h3>Candidatos</h3>
-                    <p style="margin-bottom: 3%">Nome do Candidato</p>
-                    <div><input type="text" name="candidato"></div>
+                    <label class="field-label">Nome do Candidato</label>
+                    <div><input type="text" name="candidato" placeholder="Nome do candidato"></div>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="Botão" style="flex: 1; padding: 12px" onclick="adicionar_candidatos()">Adicionar candidato</button>
-                    <button class="Botão" style="flex: 1; padding: 12px;" onclick="remover_candidato()">Remover candidato</button>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button class="Botão" style="flex: 1; padding: 10px;" onclick="adicionar_candidatos()">+ Candidato</button>
+                    <button class="Botão" style="flex: 1; padding: 10px; background: var(--navy-light);" onclick="remover_candidato()">− Candidato</button>
                 </div>
             </div>
 
-            <div style="flex: 1">
-                <p>Data de Início</p>
+            <!-- Datas -->
+            <div style="flex: 1; min-width: 220px;">
+                <h3>Período de Votação</h3>
+                <label class="field-label" for="data-inicio">Data de Início</label>
                 <input type="datetime-local" id="data-inicio">
-                <p>Data de Fim</p>
+                <label class="field-label" for="data-fim">Data de Fim</label>
                 <input type="datetime-local" id="data-fim">
             </div>
         </div>
 
-        <button class="Botão" style="margin-top: 5%; margin-bottom: 5%" onclick="criar_eleicao()">Criar Eleição</button>
+        <button class="Botão" style="margin-top: 36px; width: 100%; padding: 16px; font-size: 1rem;" onclick="criar_eleicao()">
+            Criar Eleição
+        </button>
     </div>
+
     <script src="./js/index.js"></script>
 </body>
 </html>
-

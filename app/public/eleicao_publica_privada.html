@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
-    <title>Escolher tipo de Eleição</title>
+    <title>VotoSeguro — Tipo de Eleição</title>
 </head>
 <body>
+
     <nav>
         <a href="votar_ou_criar.html" class="nav-link">
             <img src="imagens/logo.png" alt="Logo" class="logo">
@@ -18,12 +19,31 @@
     <div class="SelectVote">
         <h1>Como deseja votar?</h1>
 
-        <div class="ListaVotos" style="display: flex; padding-left: 0;">
-            <button onclick="irParaPublica()" class="Botão" style="width: 300px; font-size: 24px; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+        <div class="ListaVotos">
+            <button onclick="irParaPublica()" class="action-card" style="border: none; font-family: inherit;">
+                <div class="card-icon-wrapper">
+                    <!-- Ícone inline: globo/público -->
+                    <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="24" cy="24" r="18" stroke="#4A56A6" stroke-width="2.5"/>
+                        <ellipse cx="24" cy="24" rx="8" ry="18" stroke="#4A56A6" stroke-width="2.5"/>
+                        <line x1="6" y1="24" x2="42" y2="24" stroke="#4A56A6" stroke-width="2.5"/>
+                        <line x1="8" y1="16" x2="40" y2="16" stroke="#4A56A6" stroke-width="2"/>
+                        <line x1="8" y1="32" x2="40" y2="32" stroke="#4A56A6" stroke-width="2"/>
+                    </svg>
+                </div>
                 Eleição Pública
             </button>
 
-            <button onclick="irParaPrivada()" class="Botão" style="width: 300px; font-size: 24px; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+            <button onclick="irParaPrivada()" class="action-card" style="border: none; font-family: inherit;">
+                <div class="card-icon-wrapper">
+                    <!-- Ícone inline: cadeado/privado -->
+                    <svg width="40" height="44" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="20" width="32" height="24" rx="5" stroke="#4A56A6" stroke-width="2.5"/>
+                        <path d="M10 20V14a10 10 0 0 1 20 0v6" stroke="#4A56A6" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="20" cy="32" r="3.5" fill="#4A56A6"/>
+                        <line x1="20" y1="35.5" x2="20" y2="40" stroke="#4A56A6" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
                 Eleição Privada
             </button>
         </div>
