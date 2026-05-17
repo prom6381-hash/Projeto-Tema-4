@@ -1337,31 +1337,38 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+// Isto redireciona para a página de login se alguém tentar aceder diretamente a uma página protegida sem sessão
+// se isto estiver a causar problemas de como o nosso site funciona, tirem isto!!
+const paginasProtegidas = [
+    "criar_eleicao.html",
+    "eleicao_publica_privada.html",
+    "enviar_token_criar_eleicao.html",
+    "enviar_token_votar.html",
+    "id_votacao.html",
+    "resultados.html",
+    "verificar_senha.html",
+    "votacoes_publicas.html",
+    "votar.html",
+    "votar_ou_criar.html"
+];
 
+document.addEventListener("DOMContentLoaded", async () => {
+    const paginaAtual = window.location.pathname.split("/").pop();
 
+    if (paginasProtegidas.includes(paginaAtual)) {
+        try {
+            const resposta = await fetch("/api/sessao-info", {
+                credentials: "include"
+            });
 
-//isto é para teste apenas 
-//async function enviarChaveRSA() {
-  //  const chavePublicaRSA = localStorage.getItem("chave_Privada_RSA");
-    
-    //if (!chavePublicaRSA) {
-      //  const novaChave = await gerarChavesRSA();
-        //alert("Chave RSA gerada. Tenta votar novamente.");
-//        return;
-  //  }
-    
-    //const email = localStorage.getItem("email");
-    
-//    const response = await fetch("http://localhost:4000/guardar-chave-rsa", {
-//        method: "POST",
-   //      headers: { "Content-Type": "application/json" },
-  //       credentials: "include",
-  //       body: JSON.stringify({ 
-   //          email: email, 
-    //         chavePublicaRSA: chavePublicaRSA 
-   //      })
-   //  });
-    
-   //  const data = await response.json();
-  //   console.log(data);
-  // alert(data.message || data.error)
+            if (!resposta.ok) {
+                mostrarNotificacao("Precisa de fazer login para aceder a esta página.", "erro");
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 2000);
+            }
+        } catch (erro) {
+            window.location.href = "index.html";
+        }
+    }
+});

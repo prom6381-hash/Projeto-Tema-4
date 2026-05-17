@@ -944,3 +944,193 @@ select {
         margin: 24px auto 40px;
     }
 }
+
+
+/* Isto é para ajustar o nosso site, tendo em conta o tamanho do ecrã do dispositivo que acede o site */
+
+
+/* Tablets e portáteis pequenos  */
+@media (max-width: 1024px) {
+    .PgInicial {
+        max-width: 520px;
+        padding: 36px 32px 32px;
+    }
+
+    .SelectVote,
+    .eleição {
+        max-width: 700px;
+        padding: 36px 28px 40px;
+    }
+
+    .votar-confirmacao {
+        width: 240px;
+    }
+}
+
+/* Telemóveis  */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    nav {
+        height: 56px;
+        padding: 0 16px;
+    }
+
+    .nav-link h1 {
+        font-size: 1.1rem;
+    }
+
+    .logo {
+        height: 32px;
+    }
+
+    .sessao {
+        font-size: 0.72rem;
+        padding: 4px 12px;
+    }
+
+    .PgInicial {
+        margin: 24px 16px;
+        padding: 28px 20px 24px;
+        max-width: 100%;
+    }
+
+    .SelectVote {
+        margin: 24px 16px;
+        padding: 28px 16px 32px;
+    }
+
+    .eleição {
+        margin: 24px 16px;
+        padding: 28px 16px 32px;
+    }
+
+    .ListaVotos {
+        flex-direction: column !important;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .action-card {
+        width: 100%;
+        max-width: 300px;
+        flex-direction: row;
+        padding: 18px 20px;
+        justify-content: flex-start;
+        gap: 16px;
+    }
+
+    .action-card img {
+        width: 52px;
+        height: 52px;
+    }
+
+    .action-card .card-icon-wrapper {
+        width: 60px;
+        height: 60px;
+    }
+
+    .votar-body {
+        flex-direction: column !important;
+    }
+
+    .votar-confirmacao {
+        width: 100% !important;
+        position: static !important;
+    }
+
+    .SelectVote2 {
+        margin: 16px 0 !important;
+        width: 100%;
+    }
+
+    .resultados-wrapper,
+    .lista-eleicoes-wrapper,
+    .votar-wrapper {
+        padding: 0 16px;
+        margin: 24px auto 40px;
+    }
+
+    .resultados-header,
+    .votar-header,
+    .lista-eleicoes-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px 24px;
+    }
+
+    .Botão {
+        width: 100%;
+        justify-content: center;
+        padding: 14px 20px;
+        font-size: 0.9rem;
+    }
+
+    .toast-notificacao {
+        max-width: 90%;
+        right: 5%;
+        left: 5%;
+        font-size: 0.85rem;
+    }
+}
+
+/* Ecrãs muito pequenos  */
+@media (max-width: 480px) {
+    .PgInicial {
+        margin: 16px 8px;
+        padding: 24px 16px 20px;
+        border-radius: var(--radius-md);
+    }
+
+    .SelectVote,
+    .eleição {
+        margin: 16px 8px;
+        padding: 24px 12px 28px;
+        border-radius: var(--radius-md);
+    }
+
+    .PgInicial h2,
+    .SelectVote h1,
+    .eleição h1 {
+        font-size: 1.3rem;
+    }
+
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1rem; }
+    p  { font-size: 0.85rem; }
+
+    .Botão {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 0.85rem;
+    }
+
+    nav h1 {
+        font-size: 0.95rem;
+    }
+
+    .sessao {
+        font-size: 0.68rem;
+        padding: 3px 10px;
+    }
+}
+
+/* Ecrãs grandes com o site mais centrado */
+@media (min-width: 1400px) {
+    .PgInicial {
+        max-width: 500px;
+    }
+
+    .SelectVote,
+    .eleição {
+        max-width: 960px;
+    }
+
+    .votar-wrapper,
+    .resultados-wrapper,
+    .lista-eleicoes-wrapper {
+        max-width: 1000px;
+    }
+}
