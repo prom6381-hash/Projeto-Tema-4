@@ -23,6 +23,20 @@
             <button class="Botão" id="btn-pesquisar" style="padding: 12px 20px; margin-top: 0; margin-bottom: 0;">Buscar</button>
         </div>
 
+        <div class="filtros-container">
+
+        <select id="filtro-estado">
+            <option value="todas">Todas</option>
+            <option value="ativas">Ativas</option>
+            <option value="futuras">Futuras</option>
+            <option value="terminadas">Terminadas</option>
+        </select>
+
+        <select id="ordenacao-eleicao">
+            <option value="recentes">Mais recentes</option>
+            <option value="terminar">Mais próximas de terminar</option>
+            <option value="alfabetica">Ordem alfabética</option>
+        </select>
         <div class="ListaVotos" id="lista-publicas" style="flex-direction: column; align-items: stretch; width: 90%; padding-left: 0; margin-bottom: 5%;"></div>
 
         <a href="votar_ou_criar.html" style="width: 100%; max-width: 200px; margin-bottom: 5%;">

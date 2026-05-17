@@ -17,8 +17,16 @@ const eleicaoSchema  = new mongoose.Schema (
     
     emailsPermitidos: [String],
 
-    passwordHash: String,
-    saltPassword: String,
+    passwordHash: {
+        type: String,
+        default: null
+    },
+
+    salt: {
+        type: String,
+        default: null
+    },
+    
     dominiosPermitidos: [String],
 
     nome: {
