@@ -103,10 +103,7 @@ async function criar_eleicao() {
         return;
     }
 
-    const inicio = new Date(data_inicio);
-    const fim = new Date(data_fim);
-
-    if (fim <= inicio) {
+    if (data_fim <= data_inicio) {
         alert("A data de fim não pode ser anterior/igual à data de início.");
         return;
     }
@@ -114,7 +111,7 @@ async function criar_eleicao() {
     const hoje = new Date();
     hoje.setHours(0,0,0,0);
 
-    if (inicio < hoje) {
+    if (data_inicio < hoje) {
         alert("A eleição não pode começar no passado.");
         return;
     }
@@ -177,7 +174,7 @@ async function criar_eleicao() {
             }  else {
                 alert(data.error);
             }
-} catch (error) {
+        } catch (error) {
     alert("Erro ao   a eleição. Tente novamente mais tarde.");
 }
 }
@@ -384,7 +381,6 @@ async function pedirToken(tipo) {
             headers: {
                 "Content-Type": "application/json"
             },
-            credentials: "include",
             body: JSON.stringify({
                 email,
                 tokenType: tipo
@@ -415,7 +411,6 @@ async function pedirToken(tipo) {
             credentials: "include",
             headers: {
                 "Content-Type": "application/json"},
-            credentials: "include",
             body: JSON.stringify({
                 tokenType: tipo
             })
@@ -464,7 +459,6 @@ async function verificar_token() {
         headers: {
             "Content-Type": "application/json"
         },
-        credentials: "include",
         body: JSON.stringify({
             email: getQueryParams().email,
             token,
@@ -581,7 +575,6 @@ async function verificarSenha() {
 
     const params = new URLSearchParams(window.location.search);
     const email = params.get("email");
-    localStorage.setItem("email", email);
 
     if (!password) {
         alert("Por favor, insira a senha.");
@@ -640,8 +633,8 @@ async function id_votacao() {
     const data = await response.json();
 
     if (response.ok) {
-        localStorage.setItem("id_eleicao",data._id); //troco para data._id pq no votar() nós utilizamos o id da base de dados não dao id da eleição,
-        localStorage.setItem("nome_eleicao",data.nome); // e nos resultados das eleições nós procuramos pelo _id
+        sessionStorage.setItem("id_eleicao",data._id); //troco para data._id pq no votar() nós utilizamos o id da base de dados não dao id da eleição,
+        sessionStorage.setItem("nome_eleicao",data.nome); // e nos resultados das eleições nós procuramos pelo _id
 
         window.location.href = `votar.html?id=${idInput}`;
     } else {
@@ -798,7 +791,7 @@ async function votar(){
     }
 
     const idOpcao = candidatoSelect.value;
-    const idEleicao=localStorage.getItem("id_eleicao");
+    const idEleicao=sessionStorage.getItem("id_eleicao");
 
     const botaoEnviar = document.getElementById("btn-enviar");
     botaoEnviar.textContent = "A cifrar e enviar...";
@@ -878,8 +871,8 @@ async function votar(){
         const dadosVoto=await respostaVoto.json();
         if(respostaVoto.ok){
             alert(dadosVoto.message);
-            localStorage.removeItem("id_eleicao");
-            localStorage.removeItem("nome_eleicao");
+            sessionStorage.removeItem("id_eleicao");
+            sessionStorage.removeItem("nome_eleicao");
             window.location.href="votar_ou_criar.html";
         }
         else{
@@ -945,7 +938,6 @@ async function mostraremailsessao() {
             method: "GET",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            credentials: "include"
         });
         const data = await resposta.json();
         const mostraremail = document.getElementById("mostraremailsessao");
@@ -1026,7 +1018,7 @@ function adicionar_email() {
     novaDiv.className = "campo-email-container";
     novaDiv.style.marginTop = "10px";
     novaDiv.innerHTML = `
-        <input type="text" name="dominio" placeholder="XXXXX@instituicao.pt">
+        <input type="text" name="email_eleicao" placeholder="XXXXX@instituicao.pt">
     `;
     lista.appendChild(novaDiv);
 }
@@ -1045,7 +1037,7 @@ function remover_email() {
 }
 
 function verificar_existe_email() {
-    const inputsEmail = document.querySelectorAll('input[name="email"]');
+    const inputsEmail = document.querySelectorAll('input[name="email_eleicao"]');
     
     if (inputsEmail.length === 0 || inputsEmail[0].value.trim() === "") {
         alert("Adicione pelo menos um email para prosseguir!");
@@ -1229,8 +1221,8 @@ async function carregarEleicoesPublicas(pesquisa = "") {
 }
 
 function irParaVotar(codigo, id, nome) {
-    localStorage.setItem("id_eleicao", id);
-    localStorage.setItem("nome_eleicao", nome);
+    sessionStorage.setItem("id_eleicao", id);  //colocamos sessionStorage em vez de localStorage para que fique armazenado temporariamente
+    sessionStorage.setItem("nome_eleicao", nome);
     window.location.href = `votar.html?id=${codigo}`;
 }
 
@@ -1254,7 +1246,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function verificarEleicaoPrivada(idEleicao, senha = "") {
-    const email = localStorage.getItem("email");
     const resposta = await fetch("/verificar-eleicao-privada", {
         method: "POST",
         credentials: "include",
@@ -1262,7 +1253,6 @@ async function verificarEleicaoPrivada(idEleicao, senha = "") {
         body: JSON.stringify({
             idEleicao,
             senha,
-            email
         })
     });
 
@@ -1278,7 +1268,6 @@ async function verificarEleicaoPrivada(idEleicao, senha = "") {
 async function submeterEleicaoPrivada() {
     const idInput = document.getElementById("id-votacao").value.trim();
     const senhaInput = document.getElementById("senha-eleicao").value.trim();
-    const emailUtilizador = localStorage.getItem("email"); //se calhar vou ter de ir à sessao ver
 
     if (!idInput || !senhaInput) {
         alert("Por favor, preencha o ID e a Senha da votação.");

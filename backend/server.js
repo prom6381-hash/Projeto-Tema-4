@@ -518,7 +518,8 @@ app.post("/api/votar", async(req,res)=>{
 
 app.post("/verificar-eleicao-privada", async (req, res) => {
     try {
-        const { idEleicao, senha, email } = req.body;
+        const { idEleicao, senha, } = req.body;
+        const email = req.session.user.email
 
         const eleicao = await Eleicao.findOne( { codigo: idEleicao });  //procura pelo codigo   
         if (!eleicao) {
