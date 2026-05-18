@@ -21,7 +21,7 @@ app.use(session({
     secret: process.env.JWT_SECRET || "segredo", // segredo para assinar a sessão, deve ser uma string longa e segura em produção
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: true , maxAge: 1 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' } // LEMBRAR DE COLOCAR TRUE QUANDO TIVERMOS HTTPS. funciona 1 hora
+    cookie: { secure: false , maxAge: 1 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' } // LEMBRAR DE COLOCAR TRUE QUANDO TIVERMOS HTTPS. funciona 1 hora
     
 }));
 
