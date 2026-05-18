@@ -1355,15 +1355,13 @@ const paginasProtegidas = [
     "enviar_token_votar.html",
     "id_votacao.html",
     "resultados.html",
-    "verificar_senha.html",
     "votacoes_publicas.html",
-    "votar.html",
+    "votar.html",                //Não colocamos verificar_senha.html, já que antes de verificar a senha ainda não existe sessão, dando erro.
     "votar_ou_criar.html"
 ];
 
 document.addEventListener("DOMContentLoaded", async () => {
     const paginaAtual = window.location.pathname.split("/").pop();
-
     if (paginasProtegidas.includes(paginaAtual)) {
         try {
             const resposta = await fetch("/api/sessao-info", {
