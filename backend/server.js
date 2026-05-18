@@ -752,8 +752,8 @@ app.post("/criar-eleicao", async(req,res)=>{
             passwordHash,
             salt,
             id_criador: req.session.user.id,    
-            data_inicio,
-            data_fim,
+            data_inicio: new Date(data_inicio),//aqui e no index, como mandávamos date local, mas o mongoDB, tornava a data para UTC
+            data_fim: new Date(data_fim),// vamos converter para UTC antes de enviar, para 1hora de atraso antes de começar
             opcoes: candidatos.map(candidato => ({ nome: candidato }))
         });
 
