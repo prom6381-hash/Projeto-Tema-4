@@ -771,7 +771,7 @@ app.post("/criar-eleicao", async(req,res)=>{
     }
 });
 
-app.post("/verificar-eleicao-privada", async (req, res) => {
+app.post(" ", async (req, res) => {
     try {
 
         const {codigo, password} = req.body
