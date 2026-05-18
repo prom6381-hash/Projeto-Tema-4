@@ -17,7 +17,9 @@ const app = express();
 const rateLimit = require("express-rate-limit");
 const cors = require("cors");
 
-app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
+app.use(express.static("/app/public")); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
+console.log("DIRNAME:", __dirname);
+console.log("PATH PUBLIC:", path.join(__dirname, "../app/public"));
 app.use(session({
     secret: process.env.JWT_SECRET || "segredo", // segredo para assinar a sessão, deve ser uma string longa e segura em produção
     resave: false,
@@ -46,6 +48,13 @@ app.use(cors({
     credentials: true
 }));
 
+app.get("/", (req, res) => {
+    res.sendFile("/app/public/index.html");
+});
+
+app.get("/index.html", (req, res) => {
+    res.sendFile("/app/public/index.html");
+});
 
 const loginLimiter = rateLimit({
     windowMs: 5* 60 * 1000,

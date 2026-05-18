@@ -37,6 +37,7 @@ services:
       - EMAIL_PASS=${EMAIL_PASS}
     volumes:
       - /app/node_modules
+      - ./app/public:/app/public #tinha de por isto para por o site a funcionar, pq quando ia buscar a rota /app/public, não tinha como ir buscá-la(não existia)
     networks:
       - network_sistema_todo
     env_file:
