@@ -327,7 +327,12 @@ async function ver_uma_eleicao(id) {
         const titulo = document.createElement('h2');
         titulo.textContent = dados.nome;
         container.appendChild(titulo);
-        
+
+   
+        const descricao = document.createElement('p');
+        descricao.textContent = dados.descricao;
+        container.appendChild(descricao);
+
         const totalVotos = document.createElement('p');
         totalVotos.textContent = `Total de votos: ${dados.totalVotos}`;
         container.appendChild(totalVotos);
@@ -915,7 +920,15 @@ async function carregar_eleicao() {
 
 
     document.getElementById("titulo-eleicao").textContent = eleicao.nome;
-
+    const descricaoEl = document.getElementById("descricao-eleicao");
+    if (descricaoEl) {
+        if (eleicao.descricao) {
+            descricaoEl.textContent = eleicao.descricao;
+            descricaoEl.style.display = "block";}
+        else {
+            descricaoEl.style.display = "none";
+            }
+    }
     const container = document.getElementById("candidatos"); // Container onde os candidatos serão exibidos
 
     container.innerHTML = ""; // Limpa o container antes de adicionar os candidatos
