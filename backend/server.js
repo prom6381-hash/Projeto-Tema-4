@@ -404,7 +404,21 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
         return res.status(500).json({error: "Houve um erro interno ao começar a votação!"})
     }
 })
+function utilizadorPodeVotar(eleicao, email) {
+    const dominio = email.split("@")[1];
 
+    const temEmails = eleicao.emailsPermitidos?.length > 0;
+    const temDominios = eleicao.dominiosPermitidos?.length > 0;
+
+    // se não há regras, pode entrar (desde que autentificado)
+    if (!temEmails && !temDominios) return true;
+
+    if (temEmails && eleicao.emailsPermitidos.includes(email)) return true;
+
+    if (temDominios && eleicao.dominiosPermitidos.includes(dominio)) return true;
+
+    return false;
+}
 app.post("/api/votar", async(req,res)=>{
 
         if (!req.session || !req.session.user || !req.session.user.email){
@@ -451,24 +465,13 @@ app.post("/api/votar", async(req,res)=>{
             }
 
 
-
-
-            const dominio = email.split("@")[1];
-            const semRegras =
-                (!eleicao.emailsPermitidos || eleicao.emailsPermitidos.length === 0) &&
-                (!eleicao.dominiosPermitidos || eleicao.dominiosPermitidos.length === 0);
-
-            const emailOk =
-                eleicao.emailsPermitidos?.includes(email);
-
-            const dominioOk =
-                eleicao.dominiosPermitidos?.includes(dominio);
-
-            if (!semRegras && !emailOk && !dominioOk) {
+            if (!utilizadorPodeVotar(eleicao, email)) {
                 return res.status(403).json({
                     error: "Não tem permissão para votar nesta eleição"
                 });
             }
+
+
             const desencriptado= await desencriptarVoto(
                 sessao.chaveSessao,
                 AAD || idEleicao,
@@ -727,7 +730,8 @@ app.post("/criar-eleicao", async(req,res)=>{
 
         let passwordHash = null;
         let salt = null;
-
+        if (tipo === "privada" && !password) {
+            return res.status(400).json({error: "Eleições privadas precisam de senha"})}
         if (tipo === "privada" && password) {
 
             const response = await fetch("http://servidor-ca:5000/hash-password", {
@@ -742,7 +746,7 @@ app.post("/criar-eleicao", async(req,res)=>{
 
             passwordHash = data.hash;
             salt = data.salt;
-        }
+        } 
         const novaEleicao = new Eleicao({
             codigo,
             nome,
@@ -848,7 +852,6 @@ app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obte
     console.log("ELEIÇÃO:", eleicao);
         console.log("TIPO:", eleicao.tipo);
         console.log("DATA INICIO:", eleicao.data_inicio);
-        console.log("AUTORIZADAS:", req.session.eleicoesAutorizadas);
     if (agora < new Date(eleicao.data_inicio)) {
         return res.status(403).json({
             error: "A eleição ainda não começou",

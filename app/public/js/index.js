@@ -987,11 +987,12 @@ function remover_dominio() {
 
     const divs = lista.querySelectorAll('div');
     
-    if (divs.length > 0) {
+    if (divs.length > 1) {
         lista.removeChild(divs[divs.length - 1]);
     } else {
         alert("Não há domínios para remover.");
     }
+
 }
 
 function verificar_existe_dominio() {
