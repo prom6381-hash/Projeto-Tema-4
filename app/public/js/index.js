@@ -90,8 +90,8 @@ async function criar_eleicao() {
     }
     //aqui e no index, como mandávamos date local, mas o mongoDB, tornava a data para UTC
     // vamos converter para UTC antes de enviar para a db, para 1hora de atraso antes de começar
-    const data_inicio = new Date(document.getElementById('data-inicio').value).toISOString;
-    const data_fim = new Date(document.getElementById('data-fim').value).toISOString;
+    const data_inicio = new Date(document.getElementById('data-inicio').value);
+    const data_fim = new Date(document.getElementById('data-fim').value);
 
     if (data_inicio === "") {
         alert("Por favor, insira a data de início.");
