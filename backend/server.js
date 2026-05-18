@@ -15,6 +15,7 @@ const Eleicao= require("./models/election");
 const EleicaoEleitor = require("./models/eleicaoEleitor");
 const app = express();
 const rateLimit = require("express-rate-limit");
+const cors = require("cors");
 
 app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
 app.use(session({
@@ -28,8 +29,6 @@ app.use(session({
 
 
 const connectDB = require("./base_de_dados.js");
-const eleicaoEleitor = require("./models/eleicaoEleitor");
-const { json } = require("body-parser");
 connectDB();
 app.use(express.json());
 
@@ -41,7 +40,6 @@ const sessoesVotar={}; // armazenar temporariamente as sessões de votação a o
 
 
 // limitar por ip:
-const cors = require("cors");
 
 app.use(cors({
     origin: "http://localhost:3000",
@@ -432,6 +430,18 @@ app.post("/api/votar", async(req,res)=>{
                 return res.status(400).json({error:"Dados incompletos ou não preenchidos!"});
             }
 
+            const eleicao = await Eleicao.findById(idEleicao);
+            if (!eleicao) {
+                return res.status(404).json({ error: "Eleição não encontrada" });
+            }
+
+            if (eleicao.tipo === "privada") {
+                if (!req.session.acessoEleicaoPrivada ||
+                    req.session.acessoEleicaoPrivada !== idEleicao) {
+                    return res.status(401).json({ error: "Sem autorização para votar nesta eleição privada" });
+                }
+            }
+
             const email = req.session.user.email;
 
             const user = await User.findOne({ email });
@@ -444,13 +454,6 @@ app.post("/api/votar", async(req,res)=>{
 
             if (!sessao) {
                 return res.status(401).json({ error: "A sessão é inválida ou expirou!" });
-            }
-
-
-            const eleicao = await Eleicao.findById(idEleicao);
-
-            if (!eleicao) {
-                return res.status(404).json({ error: "Eleição não encontrada" });
             }
 
 
@@ -504,6 +507,63 @@ app.post("/api/votar", async(req,res)=>{
     })
 
 
+app.post("/verificar-eleicao-privada", async (req, res) => {
+    try {
+        const { idEleicao, senha, email } = req.body;
+
+        const eleicao = await Eleicao.findOne( { codigo: idEleicao });  //procura pelo codigo   
+        if (!eleicao) {
+            return res.status(404).json({ error: "Eleição não encontrada" });
+        }
+
+        if (eleicao.tipo !== "privada") {
+            return res.status(400).json({ error: "Esta eleição não é privada" });
+        }
+
+        // senha
+        if (eleicao.passwordHash) {
+            if (!senha) {
+                return res.status(400).json({ error: "Senha em falta para esta eleição privada." });
+            }
+
+            const response = await fetch("http://servidor-ca:5000/verify-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password: senha, salt: eleicao.salt, hash: eleicao.passwordHash })
+            });
+
+            const data = await response.json();
+            if (!data.valid) {
+                return res.status(401).json({ error: "Palavra-passe da votação incorreta." });
+            }
+        }
+
+        // emails permitidos
+        if (eleicao.emailsPermitidos && eleicao.emailsPermitidos.length > 0) {
+            if (!eleicao.emailsPermitidos.includes(email)) {
+                return res.status(403).json({ error: "O teu email não está na lista de eleitores autorizados." });
+            }
+        }
+
+        // domínios permitidos
+        if (eleicao.dominiosPermitidos && eleicao.dominiosPermitidos.length > 0) {
+            const dominioEmail = email?.split("@")[1];
+            if (!eleicao.dominiosPermitidos.includes(dominioEmail)) {
+                return res.status(403).json({ error: "O domínio do teu email não tem permissão para votar aqui." });
+            }
+        }
+
+        // guarda sessão de autorização temporária, se passar em tudo
+        
+        req.session.acessoEleicaoPrivada = eleicao._id.toString();
+        return res.json({ ok: true, message: "Acesso autorizado" });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Erro interno" });
+    }
+});
+
 // FAZER a parte que corre resultados de eleições
 app.get("/eleicoes/:id/resultados", async(req,res)=>{
 
@@ -523,13 +583,9 @@ app.get("/eleicoes/:id/resultados", async(req,res)=>{
         const votos1=await Voto.find({id_eleicao: id});
 
         const votosTotal= {};
-        votos1.forEach(total =>{
-            const idOpcaoStr=total.id_opcao.toString();
-            if (votosTotal[idOpcaoStr]){
-                ++votosTotal[idOpcaoStr];
-            } else{
-                votosTotal[idOpcaoStr]=1;
-            }
+        votos1.forEach(total => {
+            const idOpcaoStr = total.id_opcao.toString();
+            votosTotal[idOpcaoStr] = (votosTotal[idOpcaoStr] || 0) + 1;
         });
 
         const votosTodos= votos1.length;
@@ -660,22 +716,6 @@ app.post("/verificar_password", async(req,res)=>{
     return res.json({ message: "Autenticação bem-sucedida", subject: certData.subject });
 });
 
-// por agora adicionei isto para ver se a sessao está ativa/guardada
-app.get("/api/sessao-teste", (req, res) => {
-
-    if (!req.session || !req.session.user || !req.session.user.email){
-        return res.status(401).json({error:"Utilizador não autenticado!!"});
-    }
-    if (req.session.user) {
-        res.json({
-            sessao_ativa: true,
-            email: req.session.user.email,
-            id: req.session.user.id
-        });
-    } else {
-        res.json({ sessao_ativa: false });
-    }
-});
 
 app.get("/eleicoes/:id/opcoes", async (req, res) => {
     if (!req.session || !req.session.user || !req.session.user.email){
@@ -771,66 +811,8 @@ app.post("/criar-eleicao", async(req,res)=>{
     }
 });
 
-app.post(" ", async (req, res) => {
-    try {
 
-        const {codigo, password} = req.body
-
-        if (!codigo || !password) {
-            return res.status(400).json({error: "Dados em falta"
-        })
-        }
-    
-
-        const eleicao = await Eleicao.findOne({ codigo })
-
-        if (!eleicao) {
-            return res.status(404).json({
-                error: "Eleição não encontrada"
-                });
-            }
-
-        if (eleicao.tipo !== "privada") {
-            return res.status(400).json({
-                error: "A eleição não é privada"
-            });
-        }
-
-        const response = await fetch("http://servidor-ca:5000/verify-password", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                password,
-                salt: eleicao.salt,
-                hash: eleicao.passwordHash
-            })
-        });
-
-        const data = await response.json();
-        
-        if (!data.valid) {
-            return res.status(401).json({
-                error: "Password inválida"
-            });
-        }
-        
-        
-
-        return res.json({
-            message: "Acesso autorizado"
-
-        });
-
-    } catch (erro) {
-        console.error("Erro ao verificar eleição privada:", erro);
-        return res.status(500).json({
-            error: "Erro interno"
-        });
-    }
-});
-app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obter os dados da eleição, e não criar ou modificar nada
+app.get("/eleicoes/codigo/:codigo", async (req, res) => { //get, pois só queremos obter os dados da eleição, e não criar ou modificar nada
 
 
     
@@ -848,10 +830,7 @@ app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obte
     }
     const agora = new Date();
 
-    const inicio = new Date(eleicao.data_inicio).getTime();
-    console.log("ELEIÇÃO:", eleicao);
-        console.log("TIPO:", eleicao.tipo);
-        console.log("DATA INICIO:", eleicao.data_inicio);
+
     if (agora < new Date(eleicao.data_inicio)) {
         return res.status(403).json({
             error: "A eleição ainda não começou",
@@ -887,23 +866,6 @@ app.get("/eleicoes", async (req, res) => {
     }});
 
 
-
-
-
-app.get("/eleicoes/codigo/:codigo", async (req, res) => {
-    const eleicao = await Eleicao.findOne({ codigo: req.params.codigo });
-    if (!eleicao) return res.status(404).json({ error: "Eleição não encontrada" });
-    return res.json({
-        _id: eleicao._id,
-        codigo: eleicao.codigo,
-        nome: eleicao.nome,
-        tipo: eleicao.tipo,
-        data_inicio: eleicao.data_inicio,
-        data_fim: eleicao.data_fim,
-        opcoes: eleicao.opcoes
-    });  //para nao devolver ao front end a palavra passe
-});
-
 app.post("/guardar-chave-rsa",async (req,res)=>{
 
 
@@ -934,15 +896,15 @@ app.post("/guardar-chave-rsa",async (req,res)=>{
 app.get ("/api/sessao-info", (req,res)=>{
 
 
-    if (req.session.user && req.session.user.email) {
-        res.json({
+        if (req.session && req.session.user && req.session.user.email) {
+            return res.json({
             sessao_ativa: true,
             email: req.session.user.email,
             id: req.session.user.id
         });
     }
     else {
-        res.status(401).json({error:"Utilizador não autenticado!!"});
+        return res.status(401).json({error:"Utilizador não autenticado!!"});
     }
 });
 //arrancar server
@@ -959,14 +921,10 @@ app.get("/eleicoes-publicas", async (req, res) => {
 
     try {
         const { q } = req.query;
-        const filtro = { tipo: "publica" };
+        let  filtro = { tipo: "publica" };
 
-        if (q && q.trim() !== "") {
-            filtro.$or = [
-                { nome: { $regex: q, $options: "i" } },  // pesquisa por nome (case-insensitive)
-                { codigo: q.trim().toUpperCase() }         // pesquisa por código exato
-            ];
-        }
+        if (q) {
+            filtro.nome = { $regex: q, $options: "i" }; }
 
         const eleicoes = await Eleicao.find(filtro);
         return res.json(eleicoes);

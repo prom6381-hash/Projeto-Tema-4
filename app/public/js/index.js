@@ -628,7 +628,7 @@ async function id_votacao() {
     }
 
 
-    const response = await fetch (`/eleicoes/${idInput}`, {
+    const response = await fetch (`/eleicoes/codigo/${idInput}`, {
         method: "GET",
         credentials: "include",
         headers: {
@@ -903,7 +903,7 @@ async function carregar_eleicao() {
         return;
     }
 
-    const resposta = await fetch(`/eleicoes/${idInput}`);
+    const resposta = await fetch(`/eleicoes/codigo/${idInput}`);
 
     if (!resposta.ok) {
         alert("Erro ao carregar a eleição. Verifique o ID e tente novamente.");
@@ -1251,7 +1251,46 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+async function verificarEleicaoPrivada(idEleicao, senha = "") {
+    const email = localStorage.getItem("email");
+    const resposta = await fetch("/verificar-eleicao-privada", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            idEleicao,
+            senha,
+            email
+        })
+    });
 
+    const data = await resposta.json();
+    if (!resposta.ok) {
+        alert(data.error);
+        return false;
+    }
+
+    return true;
+}
+
+async function submeterEleicaoPrivada() {
+    const idInput = document.getElementById("id-votacao").value.trim();
+    const senhaInput = document.getElementById("senha-eleicao").value.trim();
+    const emailUtilizador = localStorage.getItem("email"); //se calhar vou ter de ir à sessao ver
+
+    if (!idInput || !senhaInput) {
+        alert("Por favor, preencha o ID e a Senha da votação.");
+        return;
+    }
+
+    // Chama a função que já tinhas no teu ficheiro JS
+    const autorizado = await verificarEleicaoPrivada(idInput, senhaInput);
+    
+    if (autorizado) {
+        // Se o servidor aceitar a senha, redireciona para a página de voto passando o ID
+        window.location.href = `votar.html?id=${idInput}`;
+    }
+}
 // Isto redireciona para a página de login se alguém tentar aceder diretamente a uma página protegida sem sessão
 // se isto estiver a causar problemas de como o nosso site funciona, tirem isto!!
 const paginasProtegidas = [

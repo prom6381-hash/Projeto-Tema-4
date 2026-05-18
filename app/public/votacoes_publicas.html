@@ -37,7 +37,26 @@
                 Pesquisar
             </button>
         </div>
+        <div class="filtros-wrapper" style="display: flex; gap: 12px; margin-top: 12px; margin-bottom: 20px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                <label for="filtro-estado" style="font-size: 0.85rem; color: #6B7A99; font-weight: 500;">Estado da Eleição</label>
+                <select id="filtro-estado" style="padding: 10px; border-radius: 8px; border: 1px solid #E2E8F0; font-family: inherit; font-size: 0.9rem; background-color: white;">
+                    <option value="todas">Todas as Eleições</option>
+                    <option value="ativas">A decorrer (Ativas)</option>
+                    <option value="futuras">Brevemente (Agendadas)</option>
+                    <option value="terminadas">Terminadas</option>
+                </select>
+            </div>
 
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                <label for="ordenacao-eleicao" style="font-size: 0.85rem; color: #6B7A99; font-weight: 500;">Ordenar por</label>
+                <select id="ordenacao-eleicao" style="padding: 10px; border-radius: 8px; border: 1px solid #E2E8F0; font-family: inherit; font-size: 0.9rem; background-color: white;">
+                    <option value="recentes">Mais Recentes</option>
+                    <option value="antigas">Mais Antigas</option>
+                    <option value="az">Nome (A a Z)</option>
+                    <option value="za">Nome (Z a A)</option>
+                </select>
+            </div>
         <div class="ListaVotos" id="lista-publicas" style="flex-direction: column; align-items: stretch; width: 100%; padding-left: 0; gap: 12px;"></div>
 
     </div>
