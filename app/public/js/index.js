@@ -138,11 +138,6 @@ async function criar_eleicao() {
             if (input.value.trim() !== "") emails.push(input.value.trim());
         });
 
-        if (dominios.length === 0 && emails.length === 0) {
-            alert("Para eleições privadas, defina pelo menos um domínio ou um e-mail autorizado.");
-            return;
-        }
-
         dadosPrivacidade.senha = senha;
         dadosPrivacidade.dominios = dominios;
         dadosPrivacidade.emails = emails;
@@ -1091,96 +1086,6 @@ if (window.location.pathname.includes("votar.html")) {
 }
 
 
-async function criar_eleicao_privada() {
-    const nomeEleicao = document.getElementById('nome-eleicao').value.trim();
-    const senha = document.getElementById('senha_eleicao').value.trim();
-
-
-    if (nomeEleicao === "") {
-        alert("Insira o nome da eleição.");
-        return;
-    }
-
-    if (senha.length < 6) {
-        alert("A senha deve ter pelo menos 6 caracteres.");
-        return;
-    }
-
-    const candidatos = [];
-
-    const inputs = document.querySelectorAll('#lista-candidatos input[type="text"]');
-
-    inputs.forEach(input => {
-
-        if (input.value.trim() !== "") {
-            candidatos.push(input.value.trim());
-        }
-    });
-
-    if (candidatos.length === 0) {
-        alert("Adicione candidatos.");
-        return;
-    }
-
-    const data_inicio = document.getElementById('data-inicio').value;
-    const data_fim = document.getElementById('data-fim').value;
-
-    const tipo_privacidade = sessionStorage.getItem("tipo_privacidade");
-
-    const emails = JSON.parse(sessionStorage.getItem("emails_permitidos")) || [];
-
-    const dominios = JSON.parse(sessionStorage.getItem("dominios_permitidos")) || [];
-
-    try {
-
-        const resposta = await fetch("/criar-eleicao-privada", {
-
-            method: "POST",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            credentials: "include",
-
-            body: JSON.stringify({
-
-                nome: nomeEleicao,
-                senha,
-                candidatos,
-                data_inicio,
-                data_fim,
-
-                tipo_privacidade,
-
-                emails_permitidos: emails,
-
-                dominios_permitidos: dominios
-            })
-        });
-
-        const data = await resposta.json();
-
-        if (resposta.ok) {
-
-            sessionStorage.removeItem("emails_permitidos");
-            sessionStorage.removeItem("dominios_permitidos");
-            sessionStorage.removeItem("tipo_privacidade");
-
-            alert(`Eleição criada! Código: ${data.codigo}`);
-
-            window.location.href = "votar_ou_criar.html";
-
-        } else {
-
-            alert(data.error);
-        }
-
-    } catch (erro) {
-
-        alert("Erro ao criar eleição.");
-    }
-}
 
 
 document.addEventListener("DOMContentLoaded", mostraremailsessao); //DOMContentLoaded corre o código quando o HTML estiver completamente carregado, garantindo que os elementos estão disponíveis para manipulação.
