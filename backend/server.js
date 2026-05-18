@@ -20,8 +20,8 @@ app.use(express.static(path.join(__dirname, "../app/public"))); // Serve arquivo
 app.use(session({
     secret: process.env.JWT_SECRET || "segredo", // segredo para assinar a sessão, deve ser uma string longa e segura em produção
     resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false, maxAge: 1 * 60 * 60 * 1000 } // LEMBRAR DE COLOCAR TRUE QUANDO TIVERMOS HTTPS. funciona 1 hora
+    saveUninitialized: true,
+    cookie: { secure: false, maxAge: 1 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' } // LEMBRAR DE COLOCAR TRUE QUANDO TIVERMOS HTTPS. funciona 1 hora
     
 }));
 
@@ -846,9 +846,9 @@ app.get("/eleicoes/:codigo", async (req, res) => { //get, pois só queremos obte
 
     const inicio = new Date(eleicao.data_inicio).getTime();
     console.log("ELEIÇÃO:", eleicao);
-console.log("TIPO:", eleicao.tipo);
-console.log("DATA INICIO:", eleicao.data_inicio);
-console.log("AUTORIZADAS:", req.session.eleicoesAutorizadas);
+        console.log("TIPO:", eleicao.tipo);
+        console.log("DATA INICIO:", eleicao.data_inicio);
+        console.log("AUTORIZADAS:", req.session.eleicoesAutorizadas);
     if (agora < new Date(eleicao.data_inicio)) {
         return res.status(403).json({
             error: "A eleição ainda não começou",

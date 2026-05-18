@@ -157,6 +157,7 @@ async function criar_eleicao() {
     try {
         const resposta = await fetch("/criar-eleicao", {    
             method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json"
             },
@@ -382,6 +383,7 @@ async function pedirToken(tipo) {
 
         const response = await fetch("/login", {
             method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json"
             },
@@ -413,6 +415,7 @@ async function pedirToken(tipo) {
     } else if (tipo === "vote" || tipo === "create") {
         const response = await fetch("/login", {
             method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json"},
             credentials: "include",
@@ -460,6 +463,7 @@ async function verificar_token() {
 
     const response = await fetch("/verify-token", {
         method: "POST",
+        credentials: "include",
         headers: {
             "Content-Type": "application/json"
         },
@@ -528,6 +532,7 @@ async function criarSenha() {
 
     const response = await fetch("/create-password", {
         method: "POST",
+        credentials: "include",
         headers: {
             "Content-Type": "application/json"
         },
@@ -588,6 +593,7 @@ async function verificarSenha() {
 
     const response = await fetch("/verificar_password", {
         method: "POST",
+        credentials: "include",
         headers: {
             "Content-Type": "application/json"
         },
@@ -824,6 +830,7 @@ async function votar(){
         const assinatura=await assinaturaRSA(chavesECDH.chavePublica,chaveprivadaRSA);
         const respostaInicio=await fetch("/api/iniciar-votacao", {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 chavepub_remota: chavesECDH.chavePublica,
@@ -939,6 +946,7 @@ async function mostraremailsessao() {
     try {
         const resposta = await fetch("/api/sessao-info", {
             method: "GET",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             credentials: "include"
         });
@@ -1126,7 +1134,7 @@ async function criar_eleicao_privada() {
         const resposta = await fetch("/criar-eleicao-privada", {
 
             method: "POST",
-
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json"
             },
