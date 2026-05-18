@@ -328,6 +328,7 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="datetime-local"],
+textarea,
 select {
     width: 100%;
     padding: 12px 16px;
@@ -343,7 +344,8 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
     border-color: var(--indigo-mid);
     box-shadow: 0 0 0 3px rgba(92,107,192,0.14);
 }

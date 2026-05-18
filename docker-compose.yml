@@ -36,7 +36,7 @@ services:
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
     volumes:
-      - ./:/app
+      - /app/node_modules
     networks:
       - network_sistema_todo
     env_file:

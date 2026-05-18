@@ -1,0 +1,7 @@
+node_modules/
+.env
+*.pem
+*.key
+/servidor_CA/certs/
+*.pyc
+__pycache__/

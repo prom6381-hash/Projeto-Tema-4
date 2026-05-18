@@ -749,7 +749,8 @@ app.post("/criar-eleicao", async(req,res)=>{
             candidatos,
             data_inicio,
             data_fim,
-            privacidade} = req.body;
+            privacidade, 
+            descricao} = req.body;
         if (!nome || !candidatos || !data_inicio || !data_fim) {
             return res.status(400).json({ error: "Dados incompletos ou não preenchidos!" });
         }
@@ -790,6 +791,7 @@ app.post("/criar-eleicao", async(req,res)=>{
         const novaEleicao = new Eleicao({
             codigo,
             nome,
+            descricao: descricao || null ,
             tipo,
             emailsPermitidos,
             dominiosPermitidos,
@@ -843,6 +845,7 @@ app.get("/eleicoes/codigo/:codigo", async (req, res) => { //get, pois só querem
         _id: eleicao._id,
         codigo: eleicao.codigo,
         nome: eleicao.nome,
+        descricao: eleicao.descricao,
         tipo: eleicao.tipo,
         data_inicio: eleicao.data_inicio,
         data_fim: eleicao.data_fim,

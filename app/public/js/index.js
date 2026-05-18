@@ -75,7 +75,7 @@ async function criar_eleicao() {
         alert("Por favor, insira o nome da eleição.");
         return;
     }
-
+    const descricao = document.getElementById('descricao-eleicao')?.value?.trim() || null;
     const candidatos = [];
     const inputs = document.querySelectorAll('#lista-candidatos input[type="text"]');
     inputs.forEach(input => {
@@ -160,6 +160,7 @@ async function criar_eleicao() {
             credentials: "include",
             body: JSON.stringify({
                 nome: nomeEleicao,
+                descricao,
                 candidatos,
                 data_inicio,
                 data_fim,
@@ -1211,6 +1212,7 @@ async function carregarEleicoesPublicas(pesquisa = "") {
 
             card.innerHTML = `
                 <h3>${eleicao.nome}</h3>
+                ${eleicao.descricao ? `<p class="descricao-eleicao">${eleicao.descricao}</p>` : ''}
                 <p>Código: <strong>${eleicao.codigo}</strong></p>
                 <p>${new Date(eleicao.data_inicio).toLocaleDateString('pt-PT')} → ${new Date(eleicao.data_fim).toLocaleDateString('pt-PT')}</p>
                 <p class="${estadoClasse}" style="font-weight: bold;">${estadoTexto}</p>

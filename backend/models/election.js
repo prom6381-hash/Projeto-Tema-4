@@ -34,6 +34,11 @@ const eleicaoSchema  = new mongoose.Schema (
       required: true,
       trim: true,
     },
+    descricao: {
+      type: String,
+      trim: true,
+      default: null
+    },
  
     id_criador: {
       type: mongoose.Schema.Types.ObjectId,
