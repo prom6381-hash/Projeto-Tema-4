@@ -124,16 +124,47 @@ async function criar_eleicao() {
             alert("Eleições privadas exigem uma palavra-passe.");
             return;
         }
-        
+        let todosValidos = true;
+
+
         const dominios = [];
-        document.querySelectorAll('input[name="dominio"]').forEach(input => {
-            if (input.value.trim() !== "") dominios.push(input.value.trim());
+        const regrasDominios = /^@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const inputsDominio = document.querySelectorAll('input[name="dominio"]');
+
+        inputsDominio.forEach(input => {
+            const dominio = input.value.trim();
+            if (dominio !== "") {
+                if (!regrasDominios.test(dominio)) {
+                    alert(`O domínio "${dominio}" não tem um formato válido (Ex correto: @instituicao.pt).`);
+                    todosValidos = false;
+                    input.style.border = "2px solid red"; //mostrar aonde está o erro
+                } else {
+                    input.style.border = ""; //limpar erros
+                    dominios.push(dominio);
+                }
+            }
         });
 
+
         const emails = [];
-        document.querySelectorAll('input[name="email_eleicao"]').forEach(input => {
-            if (input.value.trim() !== "") emails.push(input.value.trim());
-        });
+        const regrasEmails = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const inputsEmail = document.querySelectorAll('input[name="email_eleicao"]');
+
+        inputsEmail.forEach(input => {
+                const email = input.value.trim();
+                if (email !== "") {
+                    if (!regrasEmails.test(email)) {
+                        alert(`O e-mail "${email}" não tem um formato válido.`);    
+                        todosValidos = false;
+                        input.style.border = "2px solid red";
+                    } else {
+                        input.style.border = "";
+                        emails.push(email);
+                    }
+                }
+            });
+
+        if (!todosValidos) {return};
 
         dadosPrivacidade.senha = senha;
         dadosPrivacidade.dominios = dominios;
@@ -154,7 +185,6 @@ async function criar_eleicao() {
             headers: {
                 "Content-Type": "application/json"
             },
-            credentials: "include",
             body: JSON.stringify({
                 nome: nomeEleicao,
                 descricao,
@@ -996,31 +1026,6 @@ function remover_dominio() {
 
 }
 
-function verificar_existe_dominio() {
-    const inputsDominio = document.querySelectorAll('input[name="dominio"]');
-    
-    if (inputsDominio.length === 0 || inputsDominio[0].value.trim() === "") {
-        alert("Adicione pelo menos um domínio para prosseguir!");
-        return;
-    }
-
-    const dominios = [];
-
-    inputsDominio.forEach(input => {
-
-        const dominio = input.value.trim();
-
-        if (dominio !== "") {
-            dominios.push(dominio);
-        }
-    });
-
-    sessionStorage.setItem("tipo_privacidade", "dominios");
-    sessionStorage.setItem("dominios_permitidos", JSON.stringify(dominios));
-    window.location.href = "criar_eleicao.html";
-
-
-}
 
 
 
@@ -1047,17 +1052,6 @@ function remover_email() {
     } else {
         alert("Não há emails para remover.");
     }
-}
-
-function verificar_existe_email() {
-    const inputsEmail = document.querySelectorAll('input[name="email_eleicao"]');
-    
-    if (inputsEmail.length === 0 || inputsEmail[0].value.trim() === "") {
-        alert("Adicione pelo menos um email para prosseguir!");
-        return;
-    }
-
-    window.location.href = "criar_eleicao.html"
 }
 
 
