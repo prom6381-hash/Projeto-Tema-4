@@ -1,4 +1,4 @@
-///index.html 
+//index.html 
 
 
 // NOTIFICAÇÕES BONITAS (substitui alert)
@@ -88,9 +88,10 @@ async function criar_eleicao() {
         alert("Por favor, adicione pelo menos um candidato.");
         return;
     }
-
-    const data_inicio = document.getElementById('data-inicio').value;
-    const data_fim = document.getElementById('data-fim').value;
+    //aqui e no index, como mandávamos date local, mas o mongoDB, tornava a data para UTC
+    // vamos converter para UTC antes de enviar para a db, para 1hora de atraso antes de começar
+    const data_inicio = new Date(document.getElementById('data-inicio').value).toISOString;
+    const data_fim = new Date(document.getElementById('data-fim').value).toISOString;
 
     if (data_inicio === "") {
         alert("Por favor, insira a data de início.");
