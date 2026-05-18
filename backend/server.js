@@ -519,12 +519,19 @@ app.post("/api/votar", async(req,res)=>{
 app.post("/verificar-eleicao-privada", async (req, res) => {
     try {
         const { idEleicao, senha, } = req.body;
-        const email = req.session.user.email
+        const email = req.session.user.email; //acho que foi a questão de ponto e vírgula que estava a dar erro ao ir tentar votar numa eleicao priv
+
+        console.log("VERIFICAR PRIVADA - código:", idEleicao); //para ver o que está mal
+        console.log("VERIFICAR PRIVADA - email:", email);
 
         const eleicao = await Eleicao.findOne( { codigo: idEleicao });  //procura pelo codigo   
         if (!eleicao) {
             return res.status(404).json({ error: "Eleição não encontrada" });
         }
+            //aqui tmb
+        console.log("VERIFICAR PRIVADA - tipo:", eleicao.tipo);
+        console.log("VERIFICAR PRIVADA - emailsPermitidos:", eleicao.emailsPermitidos);
+        console.log("VERIFICAR PRIVADA - dominiosPermitidos:", eleicao.dominiosPermitidos);
 
         if (eleicao.tipo !== "privada") {
             return res.status(400).json({ error: "Esta eleição não é privada" });
@@ -549,7 +556,9 @@ app.post("/verificar-eleicao-privada", async (req, res) => {
         }
 
         // emails permitidos
-        if (eleicao.emailsPermitidos && eleicao.emailsPermitidos.length > 0) {
+        if (eleicao.emailsPermitidos && eleicao.emailsPermitidos.length > 0) {console.log("VERIFICAR - email do user:", email);
+        console.log("VERIFICAR - emailsPermitidos:", eleicao.emailsPermitidos);
+        console.log("VERIFICAR - email incluído?", eleicao.emailsPermitidos.includes(email));
             if (!eleicao.emailsPermitidos.includes(email)) {
                 return res.status(403).json({ error: "O teu email não está na lista de eleitores autorizados." });
             }
@@ -557,8 +566,13 @@ app.post("/verificar-eleicao-privada", async (req, res) => {
 
         // domínios permitidos
         if (eleicao.dominiosPermitidos && eleicao.dominiosPermitidos.length > 0) {
-            const dominioEmail = email?.split("@")[1];
-            if (!eleicao.dominiosPermitidos.includes(dominioEmail)) {
+            const dominioEmail = email?.split("@")[1];  //dominio sem @
+            console.log("VERIFICAR - domínio do user:", dominioEmail);
+            console.log("VERIFICAR - dominiosPermitidos:", eleicao.dominiosPermitidos);
+            console.log("VERIFICAR - domínio incluído?", eleicao.dominiosPermitidos.includes(dominioEmail));
+            const dominioLimpo = dominioEmail.startsWith('@') ? dominioEmail : dominioEmail;
+            const dominiosLimpos = eleicao.dominiosPermitidos.map(d => d.startsWith('@') ? d.substring(1) : d);
+            if (!dominiosLimpos.includes(dominioLimpo)) {
                 return res.status(403).json({ error: "O domínio do teu email não tem permissão para votar aqui." });
             }
         }

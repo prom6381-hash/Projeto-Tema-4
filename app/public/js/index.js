@@ -68,6 +68,26 @@ function alternarCamposPrivacidade() {
         config.style.display = "none";
     }
 }
+// faco isto para não haver erro ao votar ao tentar ao fazer apenas login, aoaga e gera novas chaves no localstorage para previnir isto
+async function verificarChavesRSA() {
+    if (localStorage.getItem("chave_Privada_RSA") && !localStorage.getItem("chave_Publica_RSA")) {
+        console.log("Chave pública a faltar");
+        localStorage.removeItem("chave_Privada_RSA"); 
+        await gerarChavesRSA(); 
+        
+        // Enviar a nova chave pública para o servidor
+        await fetch("/guardar-chave-rsa", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+                chavePublicaRSA: localStorage.getItem("chave_Publica_RSA")
+            })
+        });
+        console.log("As chaves rsa antigas foram apagadas e foram geradas umas novas.");
+    }
+}
+
 // - Botão Criar Eleição
 async function criar_eleicao() {
     const nomeEleicao = document.getElementById('nome-eleicao').value;
@@ -132,15 +152,15 @@ async function criar_eleicao() {
         const inputsDominio = document.querySelectorAll('input[name="dominio"]');
 
         inputsDominio.forEach(input => {
-            const dominio = input.value.trim();
+            const dominio = input.value.trim().replace(/^@/, ''); //remove o @ se for incluído no texto
             if (dominio !== "") {
-                if (!regrasDominios.test(dominio)) {
+                if (!regrasDominios.test('@' + dominio)) { //aqui adiciona para validar
                     alert(`O domínio "${dominio}" não tem um formato válido (Ex correto: @instituicao.pt).`);
                     todosValidos = false;
                     input.style.border = "2px solid red"; //mostrar aonde está o erro
                 } else {
                     input.style.border = ""; //limpar erros
-                    dominios.push(dominio);
+                    dominios.push(dominio); // para poder guardar aqui sem @
                 }
             }
         });
@@ -596,10 +616,10 @@ async function atualizarforcasenha(id, valido) {
     const elemento = document.getElementById(id);
 
     if (valido) {
-        elemento.textContent = "✅ " + elemento.textContent.slice(2);
+        elemento.textContent = elemento.textContent.slice(2);
         elemento.style.color = "green";
     } else {
-        elemento.textContent = "❌ " + elemento.textContent.slice(2);
+        elemento.textContent = elemento.textContent.slice(2);
         elemento.style.color = "red";
     }
 }
@@ -629,6 +649,7 @@ async function verificarSenha() {
     const data = await response.json();
 
     if (response.ok) {
+        await verificarChavesRSA(); //tem de ser feito por causa das novas chaves rsa geradas
         if(!localStorage.getItem("chave_Privada_RSA")){
             const chavePublicaRSA=await gerarChavesRSA();
             await fetch("/guardar-chave-rsa",{
@@ -668,8 +689,8 @@ async function id_votacao() {
     const data = await response.json();
 
     if (response.ok) {
-        sessionStorage.setItem("id_eleicao",data._id); //troco para data._id pq no votar() nós utilizamos o id da base de dados não dao id da eleição,
-        sessionStorage.setItem("nome_eleicao",data.nome); // e nos resultados das eleições nós procuramos pelo _id
+        localStorage.setItem("id_eleicao",data._id); //troco para data._id pq no votar() nós utilizamos o id da base de dados não dao id da eleição,
+        localStorage.setItem("nome_eleicao",data.nome); // e nos resultados das eleições nós procuramos pelo _id
 
         window.location.href = `votar.html?id=${idInput}`;
     } else {
@@ -714,6 +735,7 @@ async function gerarChavesRSA(){
         chaves.publicKey
     );
     const chavepubBase64= arrayBufferParaBase64(chavepubExportada);
+    localStorage.setItem("chave_Publica_RSA", chavepubBase64); //faço isto para guardar a chave publica para não haver erro ao tentar votar
 
     const chaveprivadaExportada= await crypto.subtle.exportKey(
         "pkcs8",
@@ -818,15 +840,17 @@ async function encriptarVoto(chaveSessao,voto,AAD){
 
 
 async function votar(){
+    console.log("sessionStorage id_eleicao:", sessionStorage.getItem("id_eleicao"));
+    console.log("localStorage id_eleicao:", localStorage.getItem("id_eleicao"));
     const  candidatoSelect=document.querySelector('input[name="candidato"]:checked');
 
     if (!candidatoSelect){
-        alert("Escolha um candidatos, por favor!!");
+        alert("Escolha um candidatos, por favor!!");    
         return;
     }
 
     const idOpcao = candidatoSelect.value;
-    const idEleicao=sessionStorage.getItem("id_eleicao");
+    const idEleicao=localStorage.getItem("id_eleicao");
 
     const botaoEnviar = document.getElementById("btn-enviar");
     botaoEnviar.textContent = "A cifrar e enviar...";
@@ -848,7 +872,7 @@ async function votar(){
             {name:"RSA-PSS",
                 hash:"SHA-256"
             },
-            false,
+            true,// mudei de false para true para a chave poder ser reexportada depois de importada, pq estava a dar erro ao tentar votar
             ["sign"]
         );
 
@@ -859,8 +883,8 @@ async function votar(){
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 chavepub_remota: chavesECDH.chavePublica,
-                assinatura: assinatura,
-                chavePublicaRSA: await crypto.subtle.exportKey("spki", chaveprivadaRSA).then(arrayBufferParaBase64) //gerar a chave priv para gerar a pub que verifica se existe ou n, para ser guardada na bd  
+                assinatura: assinatura,    //faço localstorage para ir buscar a chave pub
+                chavePublicaRSA: localStorage.getItem("chave_Publica_RSA") //gerar a chave priv para gerar a pub que verifica se existe ou n, para ser guardada na bd  
             }) // faço isto por causa do erro ao votar quando apenas fazemos login e não o criar conta, pq ao criar guarda e usa sempre a mesma chave RSA em vez de criar uma nova no login
         });
 
@@ -902,12 +926,12 @@ async function votar(){
                 idEleicao: idEleicao
             })
         });
-
+        console.log("ID sessão enviado:", dadosInicio.id_sessao);
         const dadosVoto=await respostaVoto.json();
         if(respostaVoto.ok){
             alert(dadosVoto.message);
-            sessionStorage.removeItem("id_eleicao");
-            sessionStorage.removeItem("nome_eleicao");
+            localStorage.removeItem("id_eleicao");
+            localStorage.removeItem("nome_eleicao");
             window.location.href="votar_ou_criar.html";
         }
         else{
@@ -916,16 +940,17 @@ async function votar(){
     } catch(erro){
         console.error("Erro ao votar:", erro);
         alert("Houve um erro ao tentar processar o voto!!")
-    }
+    }localStorage.removeItem("id_eleicao");
+localStorage.removeItem("nome_eleicao");
 }
 
 async function carregar_eleicao() {
-    if (window.location.pathname.includes("enviar_token_votar.html")) {
-        return;
-    }
-    
-    const params = new URLSearchParams(window.location.search);
-    const idInput = params.get("id");
+        if (window.location.pathname.includes("enviar_token_votar.html")) {
+            return;
+        }
+        
+        const params = new URLSearchParams(window.location.search);
+        const idInput = params.get("id");
 
     if (!idInput && window.location.pathname.includes("votar.html")) {
         alert("ID da votação não fornecido.");
@@ -940,6 +965,9 @@ async function carregar_eleicao() {
     }
 
     const eleicao = await resposta.json();
+
+    localStorage.setItem("id_eleicao", eleicao._id); //se não puser isto aqui, ambas aparecerão null
+    localStorage.setItem("nome_eleicao", eleicao.nome);
 
 
     document.getElementById("titulo-eleicao").textContent = eleicao.nome;
@@ -1322,3 +1350,4 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 });
+

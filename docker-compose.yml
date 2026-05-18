@@ -38,6 +38,7 @@ services:
     volumes:
       - /app/node_modules
       - ./app/public:/app/public #tinha de por isto para por o site a funcionar, pq quando ia buscar a rota /app/public, não tinha como ir buscá-la(não existia)
+      - ./backend/server.js:/app/backend/server.js #tmb tive de adiconar este pq não conseguia chegar à pagina de candidatos para votar na eleicao privada
     networks:
       - network_sistema_todo
     env_file:
