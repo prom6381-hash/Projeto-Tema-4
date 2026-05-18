@@ -453,7 +453,6 @@ app.post("/api/votar", async(req,res)=>{
 
 
 
-            const email = req.session.user.email;
             const dominio = email.split("@")[1];
             const semRegras =
                 (!eleicao.emailsPermitidos || eleicao.emailsPermitidos.length === 0) &&
