@@ -148,7 +148,7 @@ async function criar_eleicao() {
 
 
         const dominios = [];
-        const regrasDominios = /^@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const regrasDominios = /^@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;   //não permitir escrever dominios de forma errada    
         const inputsDominio = document.querySelectorAll('input[name="dominio"]');
 
         inputsDominio.forEach(input => {
@@ -245,7 +245,7 @@ async function pedirTokenCriar() {
     await pedirToken("create");
 }
 
-// ver resultados lista
+// ver todas as eleições que criou
 async function ver_resultados() {
     try {
         const resposta = await fetch('/eleicoes');
@@ -345,7 +345,7 @@ async function ver_resultados() {
     }
 }
 
-// ver resultados de uma eleição
+// ver resultados de uma eleição escolhida
 async function ver_uma_eleicao(id) {
     try {
         const resposta = await fetch(`/eleicoes/${id}/resultados`);
