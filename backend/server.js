@@ -60,7 +60,7 @@ const loginLimiter = rateLimit({
     windowMs: 5* 60 * 1000,
     max: 5 ,
     //keyGenerator: (req) => req.body.email, ----- COLOCAR ISTO PARA BLOQUEAR POR EMAIL, SEM ISTO É POR IP
-    keyGenerator: (req) => {           // Bloqueia por IP e também 
+    keyGenerator: (req) => {           // Bloqueia por IP, mas apenas conta caso o ultimo token for igual ao atual
             const ip = req.ip;
             const email = req.body.email || req.session?.user?.email || "anonimo";
             const tokenType = req.body.tokenType || "desconhecido";
@@ -70,7 +70,7 @@ const loginLimiter = rateLimit({
         },
     handler: (req, res) => {  //costuma a resposta 
         return res.status(429).json({
-            error: "Demasiados emails enviados. Tente novamente mais tarde."
+            error: "Demasiadas tentativas. Tente novamente mais tarde."
         });
     }
 });
@@ -452,6 +452,16 @@ app.post("/api/votar", async(req,res)=>{
                 return res.status(404).json({ error: "Eleição não encontrada" });
             }
 
+            const agora = new Date();
+
+            if (agora < new Date(eleicao.data_inicio)) {
+                return res.status(403).json({ error: "Esta eleição ainda não começou! Voto recusado." });
+            }
+
+            if (agora > new Date(eleicao.data_fim)) {
+                return res.status(403).json({ error: "Esta eleição já encerrou. Não são permitidos mais votos!" });
+            }
+            
             if (eleicao.tipo === "privada") {
                 if (!req.session.acessoEleicaoPrivada ||
                     req.session.acessoEleicaoPrivada !== idEleicao) {
