@@ -60,6 +60,14 @@ const loginLimiter = rateLimit({
     windowMs: 5* 60 * 1000,
     max: 5 ,
     //keyGenerator: (req) => req.body.email, ----- COLOCAR ISTO PARA BLOQUEAR POR EMAIL, SEM ISTO É POR IP
+    keyGenerator: (req) => {           // Bloqueia por IP e também 
+            const ip = req.ip;
+            const email = req.body.email || req.session?.user?.email || "anonimo";
+            const tokenType = req.body.tokenType || "desconhecido";
+            
+            // Exemplo de chave gerada: "127.0.0.1_teste@email.com_vote"
+            return `${ip}_${email}_${tokenType}`;
+        },
     handler: (req, res) => {  //costuma a resposta 
         return res.status(429).json({
             error: "Demasiados emails enviados. Tente novamente mais tarde."
