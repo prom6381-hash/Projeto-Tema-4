@@ -455,13 +455,13 @@ app.post("/api/votar", async(req,res)=>{
             const agora = new Date();
 
             if (agora < new Date(eleicao.data_inicio)) {
-                return res.status(403).json({ error: "Esta eleição ainda não começou! Voto recusado." });
+                return res.status(403).json({ error: "Esta eleição ainda não começou." });
             }
 
             if (agora > new Date(eleicao.data_fim)) {
-                return res.status(403).json({ error: "Esta eleição já encerrou. Não são permitidos mais votos!" });
+                return res.status(403).json({ error: "Esta eleição já encerrou, não são permitidos mais votos" });
             }
-            
+
             if (eleicao.tipo === "privada") {
                 if (!req.session.acessoEleicaoPrivada ||
                     req.session.acessoEleicaoPrivada !== idEleicao) {
