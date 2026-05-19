@@ -32,40 +32,6 @@ window.alert = function(mensagem) {
     }
 };
 
-
-
-// NOTIFICAÇÕES BONITAS (substitui alert)
-
-
-function mostrarNotificacao(mensagem, tipo = "sucesso") {
-    const div = document.createElement("div");
-    div.textContent = mensagem;
-    div.className = `toast-notificacao toast-${tipo}`;
-    document.body.appendChild(div);
-    
-    // Remove após 3.5 segundos
-    setTimeout(() => {
-        div.style.opacity = "0";
-        div.style.transition = "opacity 0.3s ease";
-        setTimeout(() => div.remove(), 300);
-    }, 3500);
-}
-
-// Substitui alert() por notificações bonitas
-const alertOriginal = window.alert;
-window.alert = function(mensagem) {
-    // Para mensagens de erro, usa notificação vermelha
-    if (mensagem && (mensagem.toLowerCase().includes("erro") || 
-                     mensagem.toLowerCase().includes("inválid") ||
-                     mensagem.toLowerCase().includes("falhou") ||
-                     mensagem.toLowerCase().includes("não"))) {
-        mostrarNotificacao(mensagem, "erro");
-    } else {
-        mostrarNotificacao(mensagem, "sucesso");
-    }
-};
-
-
 //criar_eleicao.html
 
 // - Botão Adicionar Candidatos
