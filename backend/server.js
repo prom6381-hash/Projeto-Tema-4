@@ -76,6 +76,20 @@ const loginLimiter = rateLimit({
 });
 
 
+const eleicaoLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, 
+    max: 5, 
+    keyGenerator: (req) => {
+        // Bloqueia a combinação do IP com a Eleição que está a tentar aceder
+        return `${req.ip}_${req.body.idEleicao || 'global'}`;
+    },
+    handler: (req, res) => {
+        return res.status(429).json({
+            error: "Demasiadas tentativas de senha para esta eleição. Tente novamente daqui a 5 minutos."
+        });
+    }
+});
+
 
 
 
@@ -534,7 +548,7 @@ app.post("/api/votar", async(req,res)=>{
     })
 
 
-app.post("/verificar-eleicao-privada", async (req, res) => {
+app.post("/verificar-eleicao-privada", eleicaoLimiter, async (req, res) => {
     try {
         const { idEleicao, senha, } = req.body;
         const email = req.session.user.email; //acho que foi a questão de ponto e vírgula que estava a dar erro ao ir tentar votar numa eleicao priv
@@ -701,7 +715,7 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
 });
 
 
-app.post("/verificar_password", async(req,res)=>{
+app.post("/verificar_password", loginLimiter, async(req,res)=>{
     const { email, password } = req.body;
 
     if (!email || !password) {
