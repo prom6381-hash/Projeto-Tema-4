@@ -604,22 +604,19 @@ async function verificarforcasenha() {
     const temEspecial = /[^A-Za-z0-9]/.test(password);
     const temTamanho = password.length >= 8;
 
-    atualizarforcasenha("maiuscula", temMaiuscula);
-    atualizarforcasenha("minuscula", temMinuscula);
-    atualizarforcasenha("numero", temNumero);
-    atualizarforcasenha("especial", temEspecial);
-    atualizarforcasenha("tamanho", temTamanho);
+    atualizarforcasenha("maiuscula", temMaiuscula, "Pelo menos 1 letra maiúscula");
+    atualizarforcasenha("minuscula", temMinuscula, "Pelo menos 1 letra minúscula");
+    atualizarforcasenha("numero", temNumero, "Pelo menos 1 número");
+    atualizarforcasenha("especial", temEspecial, "Pelo menos 1 carácter especial");
+    atualizarforcasenha("tamanho", temTamanho, "Pelo menos 8 caracteres");
 }
 
-async function atualizarforcasenha(id, valido) {
+async function atualizarforcasenha(id, valido,textoOriginal) {
     const elemento = document.getElementById(id);
-
-    if (valido) {
-        elemento.textContent = elemento.textContent.slice(2);
-        elemento.style.color = "green";
-    } else {
-        elemento.textContent = elemento.textContent.slice(2);
-        elemento.style.color = "red";
+    // tive de alterar isto "elemento.textContent = elemento.textContent.slice(2);" 
+    if (elemento) {     //pq estava a cortar os dois primeiros caracteres, cada vez que escrevia um caracter
+        elemento.textContent = textoOriginal;//Escreve o texto completo novamente (não corta nada!), em vez de pegar o que estava no eleemento, o que dava um bug
+        elemento.style.color = valido ? "green" : "red";
     }
 }
 
