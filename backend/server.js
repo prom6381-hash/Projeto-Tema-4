@@ -77,9 +77,6 @@ const loginLimiter = rateLimit({
 });
 
 
-<<<<<<< HEAD
-// Gera um código alfanumérico aleatório de 6 caracteres para identificar eleições
-=======
 const eleicaoLimiter = rateLimit({
     windowMs: 5 * 60 * 1000, 
     max: 5, 
@@ -580,13 +577,7 @@ app.post("/api/votar", async(req,res)=>{
         }
     })
 
-<<<<<<< HEAD
-// Valida o acesso a uma eleição privada — verifica senha, emails e domínios permitidos
-app.post("/verificar-eleicao-privada", async (req, res) => {
-=======
-
 app.post("/verificar-eleicao-privada", eleicaoLimiter, async (req, res) => {
->>>>>>> a09c8f0a5c9ce31e9653922cd0d4b43a697adfef
     try {
         const { idEleicao, senha, } = req.body;
         const email = req.session.user.email;
