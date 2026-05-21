@@ -61,15 +61,44 @@ const loginLimiter = rateLimit({
     windowMs: 5* 60 * 1000,
     max: 5 ,
     //keyGenerator: (req) => req.body.email, ----- COLOCAR ISTO PARA BLOQUEAR POR EMAIL, SEM ISTO É POR IP
+    keyGenerator: (req) => {           // Bloqueia por IP, mas apenas conta caso o ultimo token for igual ao atual
+            const ip = req.ip;
+            const email = req.body.email || req.session?.user?.email || "anonimo";
+            const tokenType = req.body.tokenType || "desconhecido";
+            
+            // Exemplo de chave gerada: "127.0.0.1_teste@email.com_vote"
+            return `${ip}_${email}_${tokenType}`;
+        },
     handler: (req, res) => {  //costuma a resposta 
         return res.status(429).json({
-            error: "Demasiados emails enviados. Tente novamente mais tarde."
+            error: "Demasiadas tentativas. Tente novamente mais tarde."
         });
     }
 });
 
 
+<<<<<<< HEAD
 // Gera um código alfanumérico aleatório de 6 caracteres para identificar eleições
+=======
+const eleicaoLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, 
+    max: 5, 
+    keyGenerator: (req) => {
+        // Bloqueia a combinação do IP com a Eleição que está a tentar aceder
+        return `${req.ip}_${req.body.idEleicao || 'global'}`;
+    },
+    handler: (req, res) => {
+        return res.status(429).json({
+            error: "Demasiadas tentativas de senha para esta eleição. Tente novamente daqui a 5 minutos."
+        });
+    }
+});
+
+
+
+
+
+>>>>>>> a09c8f0a5c9ce31e9653922cd0d4b43a697adfef
 function gerarCodigoEleicao() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
@@ -468,6 +497,16 @@ app.post("/api/votar", async(req,res)=>{
                 return res.status(404).json({ error: "Eleição não encontrada" });
             }
 
+            const agora = new Date();
+
+            if (agora < new Date(eleicao.data_inicio)) {
+                return res.status(403).json({ error: "Esta eleição ainda não começou." });
+            }
+
+            if (agora > new Date(eleicao.data_fim)) {
+                return res.status(403).json({ error: "Esta eleição já encerrou, não são permitidos mais votos" });
+            }
+
             if (eleicao.tipo === "privada") {
                 if (!req.session.acessoEleicaoPrivada ||
                     req.session.acessoEleicaoPrivada !== idEleicao) {
@@ -541,8 +580,13 @@ app.post("/api/votar", async(req,res)=>{
         }
     })
 
+<<<<<<< HEAD
 // Valida o acesso a uma eleição privada — verifica senha, emails e domínios permitidos
 app.post("/verificar-eleicao-privada", async (req, res) => {
+=======
+
+app.post("/verificar-eleicao-privada", eleicaoLimiter, async (req, res) => {
+>>>>>>> a09c8f0a5c9ce31e9653922cd0d4b43a697adfef
     try {
         const { idEleicao, senha, } = req.body;
         const email = req.session.user.email;
@@ -714,8 +758,13 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
     return res.json({ message: "Password criada com sucesso" });
 });
 
+<<<<<<< HEAD
 // Verifica a password do utilizador e valida o certificado antes de criar a sessão
 app.post("/verificar_password", async(req,res)=>{
+=======
+
+app.post("/verificar_password", loginLimiter, async(req,res)=>{
+>>>>>>> a09c8f0a5c9ce31e9653922cd0d4b43a697adfef
     const { email, password } = req.body;
 
     if (!email || !password) {
