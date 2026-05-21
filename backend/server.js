@@ -95,7 +95,7 @@ const eleicaoLimiter = rateLimit({
 
 
 
->>>>>>> a09c8f0a5c9ce31e9653922cd0d4b43a697adfef
+
 function gerarCodigoEleicao() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
@@ -749,13 +749,9 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
     return res.json({ message: "Password criada com sucesso" });
 });
 
-<<<<<<< HEAD
-// Verifica a password do utilizador e valida o certificado antes de criar a sessão
-app.post("/verificar_password", async(req,res)=>{
-=======
+
 
 app.post("/verificar_password", loginLimiter, async(req,res)=>{
->>>>>>> a09c8f0a5c9ce31e9653922cd0d4b43a697adfef
     const { email, password } = req.body;
 
     if (!email || !password) {
