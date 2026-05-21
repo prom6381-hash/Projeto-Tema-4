@@ -405,11 +405,6 @@ async function ver_uma_eleicao(id) {
             container.appendChild(barraFundo);
         });
         
-        const botaoVoltar = document.createElement('button');
-        botaoVoltar.textContent = 'Voltar';
-        botaoVoltar.onclick = ver_resultados;
-        container.appendChild(botaoVoltar);
-        
     } catch (erro) {
         console.error('Erro:', erro);
         alert("Erro ao obter os resultados. Tente novamente!")

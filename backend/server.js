@@ -1,5 +1,5 @@
 // AUTENTICAÇÃO via email usando tokens de uso único
-// Token para verificar email (Atutenticação)
+// Token para verificar email (Autenticação)
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
@@ -11,27 +11,28 @@ const { hashToken } = require("./utils/hmac");
 const Token = require("./models/Token");
 const User = require("./models/User");
 const Voto = require("./models/Voto");
-const Eleicao= require("./models/election");
+const Eleicao= require("./models/election");  
 const EleicaoEleitor = require("./models/eleicaoEleitor");
 const app = express();
 const rateLimit = require("express-rate-limit");
 const cors = require("cors");
 
-app.use(express.static("/app/public")); // Serve arquivos estáticos da pasta "public" (index.html, css, js, etc.)
+app.use(express.static("/app/public")); // Serve ficheiros estáticos da pasta "public" (index.html, css, js, etc.)
 console.log("DIRNAME:", __dirname);
 console.log("PATH PUBLIC:", path.join(__dirname, "../app/public"));
+
+// Configuração das sessões de utilizador
 app.use(session({
     secret: process.env.JWT_SECRET || "segredo", // segredo para assinar a sessão, deve ser uma string longa e segura em produção
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false , maxAge: 1 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' } // LEMBRAR DE COLOCAR TRUE QUANDO TIVERMOS HTTPS. funciona 1 hora
-    
+    cookie: { secure: true , maxAge: 1 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' } 
 }));
 
 
 
 const connectDB = require("./base_de_dados.js");
-connectDB();
+connectDB(); // Estabelece a ligação à base de dados MongoDB
 app.use(express.json());
 
 const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
@@ -41,13 +42,12 @@ const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
 const sessoesVotar={}; // armazenar temporariamente as sessões de votação a ocorrerem
 
 
-// limitar por ip:
-
 app.use(cors({
     origin: "http://localhost:3000",
     credentials: true
 }));
 
+//serve o ficheiro HTML da aplicação
 app.get("/", (req, res) => {
     res.sendFile("/app/public/index.html");
 });
@@ -56,6 +56,7 @@ app.get("/index.html", (req, res) => {
     res.sendFile("/app/public/index.html");
 });
 
+// Limita a 5 tentativas de login por IP a cada 5 minutos (proteção contra brute force)
 const loginLimiter = rateLimit({
     windowMs: 5* 60 * 1000,
     max: 5 ,
@@ -68,13 +69,12 @@ const loginLimiter = rateLimit({
 });
 
 
-
-
-
-
+// Gera um código alfanumérico aleatório de 6 caracteres para identificar eleições
 function gerarCodigoEleicao() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
+
+// Solicita ao servidor CA a geração de um par de chaves Diffie-Hellman
 async function gerarchavesDH() {
     const response = await fetch("http://servidor-ca:5000/dh/gerar-chaves", {
         method: "POST"
@@ -82,6 +82,7 @@ async function gerarchavesDH() {
     return await response.json();
 }
 
+// Calcula a chave de sessão ECDH a partir da chave pública do cliente
 async function calculoChaveSessao(chavepub_remota){
     const chavePEM=base64ParaPEM(chavepub_remota,"PUBLIC KEY") //mesmo erro que tive na assinaturaRSA
     const response= await fetch("http://servidor-ca:5000/dh/chave-sessao", {method: "POST", headers: {"Content-Type":"application/json"},
@@ -95,7 +96,7 @@ async function calculoChaveSessao(chavepub_remota){
 
     return JSON.parse(text);
 }
-function base64ParaPEM(base64,type){  //tive de fazer esta função pq ao votaar estava a dar erro interno pq o servidor estava a compara um ficheiro pem com um base64(browser)
+function base64ParaPEM(base64,type){  //tive de fazer esta função pq ao votar estava a dar erro interno pq o servidor estava a compara um ficheiro pem com um base64(browser)
     const linhas= base64.match(/.{1,64}/g); // Estava a dar este erro--> ValueError: Unable to load PEM file. MalformedFraming
     const body= linhas.join('\n');
     return `-----BEGIN ${type}-----\n${body}\n-----END ${type}-----`;
@@ -103,15 +104,17 @@ function base64ParaPEM(base64,type){  //tive de fazer esta função pq ao votaar
 
 function PEMparabase64(pem){  //tive de fazer esta função pq ao votaar estava a dar erro Houve um erro ao tentar processar o voto!! 
     //Estava a dar este erro--> ValueError: Unable to load PEM file. MalformedFraming
-    return pem// Pq, no calculo de chavessessao utilizei a chave publica do cliente para ser convertido para PEM e não base64(SPKI)
+    return pem// Pq, no calculo de chaves sessao utilizei a chave publica do cliente para ser convertido para PEM e não base64(SPKI)
         .replace('-----BEGIN PUBLIC KEY-----', '')
         .replace('-----END PUBLIC KEY-----', '')
         .replace(/\n/g, '')
         .trim();                
 }
 
+// Verifica a assinatura RSA de um dado junto do servidor CA
+// Garante autenticidade e integridade dos dados enviados pelo cliente
 async function assinaturaRSA(chavepubRSA,dados,assinatura){
-    const chavePEM=base64ParaPEM(chavepubRSA,"PUBLIC KEY") //deu erro pq pus com underscore _
+    const chavePEM=base64ParaPEM(chavepubRSA,"PUBLIC KEY") 
     console.log("Chave PEM enviada:", chavePEM.substring(0, 100) + "...");
     const response= await fetch("http://servidor-ca:5000/rsa/integridade", {method: "POST", headers: {"Content-Type":"application/json"},
     body: JSON.stringify({chave_publica: chavePEM,
@@ -128,6 +131,7 @@ async function assinaturaRSA(chavepubRSA,dados,assinatura){
     return JSON.parse(text);
 }
 
+// Desencripta um voto cifrado com AES-GCM usando a chave de sessão ECDH
 async function desencriptarVoto(chave,AAD,iv,votoCifrado,tag){
     console.log("AES - chave:", chave);
     console.log("AES - AAD:", AAD);
@@ -151,7 +155,8 @@ async function desencriptarVoto(chave,AAD,iv,votoCifrado,tag){
 
 
 
-
+// Rota de login — gera e envia token por email consoante o tipo de operação
+// tokenType: "register" | "login" | "vote" | "create"
 app.post("/login", loginLimiter, async (req, res) => {
     const { tokenType } = req.body;
     console.log("1. tokenType:", tokenType);
@@ -162,6 +167,7 @@ app.post("/login", loginLimiter, async (req, res) => {
     }
 
     let email;
+    // Para votar ou criar, o utilizador já tem de estar autenticado via sessão
     if (tokenType === "vote" || tokenType === "create") {
         console.log("3. vote/create - sessão:", req.session?.user?.email);
         if (!req.session || !req.session.user || !req.session.user.email) {
@@ -184,10 +190,12 @@ app.post("/login", loginLimiter, async (req, res) => {
 
     if (tokenType === "register") {
     console.log("REGISTO: existingUser.isVerified:", existingUser?.isVerified);
+    // Impede o registo se o utilizador já existir e estiver verificado
     if (existingUser && existingUser.isVerified) {
         console.log("REGISTO: Utilizador já existe e está verificado");
         return res.status(400).json({ error: "Utilizador já existe" });
     }
+    // Remove utilizador não verificado para permitir novo registo
     if (existingUser) {
         console.log("REGISTO: Apagando utilizador não verificado");
         await User.deleteOne({ email });
@@ -197,6 +205,7 @@ app.post("/login", loginLimiter, async (req, res) => {
     }   
 
     // LOGIN
+    // Garante que apenas utilizadores verificados conseguem fazer login
     if (tokenType === "login") {
         if (!existingUser || !existingUser.isVerified) {
             return res.status(404).json({ error: "Utilizador não encontrado" });
@@ -209,11 +218,12 @@ app.post("/login", loginLimiter, async (req, res) => {
     }
 
 
-    // Gerar token
+    // Gera token, faz hash e define expiração
     const token = generateToken();
     const tokenHash = hashToken(token, user._id.toString());
     const expiresAt = new Date(Date.now() + TOKEN_EXPIRATION_TIME);
 
+    //garante apenas um token ativo por tipo
     await Token.findOneAndUpdate(
         {
             userId: user._id.toString(),
@@ -230,20 +240,21 @@ app.post("/login", loginLimiter, async (req, res) => {
             new: true
         }
     );
-
+//Envia o token em texto simples por email (o hash fica guardado na BD)
         await sendTokenEmail(email, token);
 
     return res.json({ message: "Token gerado e enviado" });
 });
 
 
-// Verificar token
+//Verifica o token submetido pelo utilizador e valida a autenticação
 
 app.post("/verify-token", async(req, res) => {  //async porque vamos usar await para operações assíncronas (acesso à base de dados)
     const {token, tokenType } = req.body;
 
     let email; // Declarar a variável email fora do bloco if para que possa ser usada posteriormente. Caso não fosse assim, daria erro de "email is not defined"
 
+    // Para vote/create, usa o email da sessão ativa em vez do corpo do pedido
     if (tokenType == "vote" || tokenType == "create") {
         if (!req.session || !req.session.user || !req.session.user.email) {
             return res.status(401).json({ error: "O utilizador não está autenticado!" });
@@ -270,6 +281,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
         return res.status(400).json({ error: "Token inválido ou expirado" });
     }
 
+    // Verifica se o utilizador está temporariamente bloqueado por excesso de tentativas
     if (tokenData.blockedUntil && tokenData.blockedUntil > Date.now()) {
     return res.status(429).json({
         error: "Demasiadas tentativas. Tenta mais tarde."
@@ -310,7 +322,8 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 
         return res.status(400).json({ error: "Token inválido" });
     }   else {
-        tokenData.attempts = 0; // Reseta o contador de tentativas após uma verificação bem-sucedida
+        // Token correto — reset do contador de tentativas e bloqueio
+        tokenData.attempts = 0;
         tokenData.blockedUntil = null;
         await tokenData.save();
     }
@@ -345,7 +358,7 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
     }
 });
 
-
+// Inicia uma sessão de votação segura com troca de chaves ECDH e verificação RSA
 app.post("/api/iniciar-votacao", async (req,res)=>{
     try{
 
@@ -381,6 +394,7 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
             return res.status(400).json({error:"Não foi registado a chave RSA!"});
         }
 
+         // Verifica se a chave pública DH foi assinada pelo utilizador (prova de posse)
         const verificar= await assinaturaRSA(
             user.chavePublicaRSA,
             chavepub_remota,
@@ -391,8 +405,12 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
             return res.status(401).json({error: "Autenticação com a assinatura falhou!!"});
         }
 
+        // Gera chaves DH no servidor e calcula a chave de sessão partilhada
         const chavesDH= await gerarchavesDH();
         const sessao= await calculoChaveSessao(chavepub_remota);
+
+
+         // Cria um ID único para esta sessão de votação e guarda em memória
         const idSessao= crypto.randomBytes(16).toString("hex");
 
         sessoesVotar[idSessao]={
@@ -400,6 +418,7 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
             chaveSessao:sessao.chave_sessao
 
         };
+        // Devolve ao cliente o ID de sessão e a chave pública DH do servidor
         return res.json({
             id_sessao: idSessao,
             chave_publica_dh: PEMparabase64(chavesDH.chave_publica),
@@ -411,6 +430,9 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
         return res.status(500).json({error: "Houve um erro interno ao começar a votação!"})
     }
 })
+
+// Verifica se um utilizador tem permissão para votar numa eleição
+// Permite acesso se não houver restrições, ou se o email/domínio estiver na lista
 function utilizadorPodeVotar(eleicao, email) {
     const dominio = email.split("@")[1];
 
@@ -426,6 +448,8 @@ function utilizadorPodeVotar(eleicao, email) {
 
     return false;
 }
+// Recebe e regista um voto cifrado com AES-GCM
+// Desencripta, valida e guarda o voto de forma anónima (sem ligar ao utilizador)
 app.post("/api/votar", async(req,res)=>{
 
         if (!req.session || !req.session.user || !req.session.user.email){
@@ -483,7 +507,7 @@ app.post("/api/votar", async(req,res)=>{
                 });
             }
 
-
+            // Desencripta o voto usando a chave de sessão ECDH
             const desencriptado= await desencriptarVoto(
                 sessao.chaveSessao,
                 AAD || idEleicao,
@@ -494,19 +518,21 @@ app.post("/api/votar", async(req,res)=>{
 
             const idOpcao= desencriptado.voto;
 
+            // Guarda o voto de forma anónima (só o id da opção, sem referência ao utilizador)
             const guardarVoto= new Voto({
                 id_eleicao: idEleicao,
                 id_opcao: idOpcao
             });
             await guardarVoto.save();
 
+            // Marca o utilizador como tendo votado nesta eleição (para evitar duplo voto)
             await EleicaoEleitor.findOneAndUpdate(
                 { id_eleicao: idEleicao, id_utilizador: user._id },
                 { votou: true },
                 { upsert: true, new: true }
             );
 
-            delete sessoesVotar[id_sessao];
+            delete sessoesVotar[id_sessao]; // Remove a sessão de votação após voto registado
             return res.json({ message: "O voto foi corretamente registado!"});
 
         } catch(erro){
@@ -515,11 +541,11 @@ app.post("/api/votar", async(req,res)=>{
         }
     })
 
-
+// Valida o acesso a uma eleição privada — verifica senha, emails e domínios permitidos
 app.post("/verificar-eleicao-privada", async (req, res) => {
     try {
         const { idEleicao, senha, } = req.body;
-        const email = req.session.user.email; //acho que foi a questão de ponto e vírgula que estava a dar erro ao ir tentar votar numa eleicao priv
+        const email = req.session.user.email;
 
         console.log("VERIFICAR PRIVADA - código:", idEleicao); //para ver o que está mal
         console.log("VERIFICAR PRIVADA - email:", email);
@@ -537,7 +563,7 @@ app.post("/verificar-eleicao-privada", async (req, res) => {
             return res.status(400).json({ error: "Esta eleição não é privada" });
         }
 
-        // senha
+        //Verifica a senha da eleição privada junto do servidor CA (hash + salt)
         if (eleicao.passwordHash) {
             if (!senha) {
                 return res.status(400).json({ error: "Senha em falta para esta eleição privada." });
@@ -606,6 +632,7 @@ app.get("/eleicoes/:id/resultados", async(req,res)=>{
         
         const votos1=await Voto.find({id_eleicao: id});
 
+        // Agrupa os votos por opção usando um objeto de contagem
         const votosTotal= {};
         votos1.forEach(total => {
             const idOpcaoStr = total.id_opcao.toString();
@@ -613,8 +640,10 @@ app.get("/eleicoes/:id/resultados", async(req,res)=>{
         });
 
         const votosTodos= votos1.length;
+        // Calcula votos e percentagem para cada opção da eleição
         const resultados= eleicao.opcoes.map(opcao=>{
-            const votoCandidato=votosTotal[opcao._id.toString()] || 0; //se não houver votos para a opção, considera 0. Faz-se desta forma para ser string, pois seria objeto se fosse votosTotal[opcoes.nome] sem o || 0, e depois não dava para fazer os cálculos.
+            const votoCandidato=votosTotal[opcao._id.toString()] || 0; //se não houver votos para a opção, considera 0. 
+                                                                        //Faz-se desta forma para ser string, pois seria objeto se fosse votosTotal[opcoes.nome] sem o || 0, e depois não dava para fazer os cálculos.
             return{
                 nome: opcao.nome,
                 _id: opcao._id,
@@ -637,7 +666,7 @@ app.get("/eleicoes/:id/resultados", async(req,res)=>{
 });
 
 
-
+// Cria a password do utilizador, guarda o hash, salt, certificado e chave RSA pública
 app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usando token e email) e depois cria a password:
     const { email, password } = req.body;
 
@@ -650,7 +679,7 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
     if (!user) {
         return res.status(404).json({ error: "Utilizador não encontrado" });
     }   
-
+ // Envia a password ao servidor CA para fazer hash seguro com salt
     const response = await fetch("http://servidor-ca:5000/hash-password", { //no porto 5000, pois é o porto onde o servidor CA está a correr, que tem as funções do ficheiro auth.py
         method: "POST",
         headers: {
@@ -658,7 +687,8 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
         },
         body: JSON.stringify({ password })
     });
-        
+
+    // Solicita ao servidor CA a emissão de um certificado para o utilizador
     const certResponse = await fetch("http://servidor-ca:5000/sign", {
         method: "POST",
         headers: {
@@ -671,6 +701,8 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
 
     const certData = await certResponse.json();
     console.log("chavePublicaRSA recebida:", req.body.chavePublicaRSA ? "sim" : "nao");
+
+    // Guarda todos os dados de segurança do utilizador e marca como verificado
     user.chavePublicaRSA=req.body.chavePublicaRSA;
     user.certificate = certData.certificate; //guarda o certificado do utilizador na base de dados
     user.passwordHash = data.hash;
@@ -682,7 +714,7 @@ app.post("/create-password", async(req,res)=>{ //primeiro cria o utlizador (usan
     return res.json({ message: "Password criada com sucesso" });
 });
 
-
+// Verifica a password do utilizador e valida o certificado antes de criar a sessão
 app.post("/verificar_password", async(req,res)=>{
     const { email, password } = req.body;
 
@@ -695,7 +727,7 @@ app.post("/verificar_password", async(req,res)=>{
     if (!user) {
         return res.status(404).json({ error: "Utilizador não encontrado" });
     }   
-    
+    // Verifica a password usando o hash e salt guardados na BD
     const response = await fetch("http://servidor-ca:5000/verify-password", { //no porto 5000, pois é o porto onde o servidor CA está a correr, que tem as funções do ficheiro auth.py
         method: "POST",
         headers: {
@@ -711,9 +743,8 @@ app.post("/verificar_password", async(req,res)=>{
     if (!data.valid) {
         return res.status(400).json({ error: "Password inválida" });
     }
-
-    //certificado   
-
+   
+    // Valida o certificado do utilizador junto do servidor de verificação
     const certResponse = await fetch("http://verify-server:6060/verify_certificate", {
         method: "POST",
         headers: {
@@ -730,17 +761,17 @@ app.post("/verificar_password", async(req,res)=>{
         return res.status(400).json({ error: "Certificado inválido" });
     }
 
-
+    // Cria a sessão autenticada com os dados do utilizador
     req.session.user = {
     email: user.email,
     isVerified: true,
-    id: user._id.toString() //adicono o toString para testar para ver se corre bem
+    id: user._id.toString() //adiciono o toString para testar para ver se corre bem
     }
 
     return res.json({ message: "Autenticação bem-sucedida", subject: certData.subject });
 });
 
-
+// Devolve as opções de votação de uma eleição pelo seu ID
 app.get("/eleicoes/:id/opcoes", async (req, res) => {
     if (!req.session || !req.session.user || !req.session.user.email){
         return res.status(401).json({error:"Utilizador não autenticado!!"});
@@ -763,6 +794,7 @@ app.get("/eleicoes/:id/opcoes", async (req, res) => {
    }
 });
 
+// Cria uma nova eleição com as configurações fornecidas (pública ou privada)
 app.post("/criar-eleicao", async(req,res)=>{
 
     try{
@@ -778,6 +810,8 @@ app.post("/criar-eleicao", async(req,res)=>{
         if (!nome || !candidatos || !data_inicio || !data_fim) {
             return res.status(400).json({ error: "Dados incompletos ou não preenchidos!" });
         }
+
+        // Gera um código único para a eleição (evita colisões com loop de verificação)
         let codigo;
         let codigoExiste = true;    
 
@@ -795,6 +829,8 @@ app.post("/criar-eleicao", async(req,res)=>{
 
         let passwordHash = null;
         let salt = null;
+
+        // Eleições privadas sem senha são rejeitadas
         if (tipo === "privada" && !password) {
             return res.status(400).json({error: "Eleições privadas precisam de senha"})}
         if (tipo === "privada" && password) {
@@ -837,7 +873,7 @@ app.post("/criar-eleicao", async(req,res)=>{
     }
 });
 
-
+// Procura uma eleição pelo código e verifica se já começou antes de devolver os dados
 app.get("/eleicoes/codigo/:codigo", async (req, res) => { //get, pois só queremos obter os dados da eleição, e não criar ou modificar nada
 
 
@@ -856,7 +892,7 @@ app.get("/eleicoes/codigo/:codigo", async (req, res) => { //get, pois só querem
     }
     const agora = new Date();
 
-
+  // Impede acesso a eleições que ainda não começaram
     if (agora < new Date(eleicao.data_inicio)) {
         return res.status(403).json({
             error: "A eleição ainda não começou",
@@ -864,7 +900,7 @@ app.get("/eleicoes/codigo/:codigo", async (req, res) => { //get, pois só querem
         });
     }
 
-
+// Devolve apenas os campos necessários
     return res.json({
         _id: eleicao._id,
         codigo: eleicao.codigo,
@@ -877,6 +913,7 @@ app.get("/eleicoes/codigo/:codigo", async (req, res) => { //get, pois só querem
     }); //isto, para não devolver para o front end o a palavra passe nem salt
 });
 
+// Devolve todas as eleições criadas pelo utilizador autenticado    
 app.get("/eleicoes", async (req, res) => {
 
     if (!req.session || !req.session.user || !req.session.user.email){
@@ -893,6 +930,7 @@ app.get("/eleicoes", async (req, res) => {
     }});
 
 
+// Guarda ou atualiza a chave pública RSA do utilizador autenticado na BD
 app.post("/guardar-chave-rsa",async (req,res)=>{
 
 
@@ -919,7 +957,7 @@ app.post("/guardar-chave-rsa",async (req,res)=>{
     }
 });
 
-
+// Devolve informação da sessão ativa — usado pelo frontend para verificar autenticação
 app.get ("/api/sessao-info", (req,res)=>{
 
 
@@ -941,6 +979,7 @@ app.listen(PORT, () => {
     console.log(`Servidor a correr na porta ${PORT}`);
 });
 
+// Devolve todas as eleições públicas, com suporte a pesquisa por nome
 app.get("/eleicoes-publicas", async (req, res) => {
     if (!req.session || !req.session.user || !req.session.user.email) {
         return res.status(401).json({ error: "Utilizador não autenticado!!" });

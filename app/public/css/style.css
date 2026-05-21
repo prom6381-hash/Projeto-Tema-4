@@ -434,25 +434,25 @@ select {
 /* ---- Progress bars ---- */
 
 .barra-progresso-fundo {
-    background: var(--indigo-soft);
-    height: 26px;
-    border-radius: 100px;
-    margin-bottom: 12px;
+    width: 100%;
+    height: 30px;
+    background-color: #ddd;
+    border-radius: 10px;
     overflow: hidden;
+    margin-bottom: 15px;
 }
 
 .barra-progresso-preenchida {
-    background: linear-gradient(90deg, var(--indigo), var(--indigo-mid));
+    width: 0%;
     height: 100%;
-    border-radius: 100px;
-    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    background-color: #4A56A6;
+    color: white;
+
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    padding-right: 12px;
-    color: white;
-    font-size: 12px;
-    font-weight: 700;
+    justify-content: center;
+
+    transition: width 0.8s ease;
 }
 
 /* ---- Toast notifications ---- */
@@ -1210,27 +1210,28 @@ input:focus {
 /* BARRAS DE PROGRESSO (resultados) */
 
 .barra-progresso-fundo {
-    background: #e8e8e8;
-    height: 28px;
-    border-radius: 14px;
-    margin-bottom: 15px;
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 12px;
     overflow: hidden;
+    margin: 12px 0;
+    height: 32px;
 }
 
 .barra-progresso-preenchida {
-    background: linear-gradient(90deg, #6466cc, #8183e0);
-    height: 100%;
-    border-radius: 14px;
-    transition: width 0.8s ease;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 10px;
+    background-color: #4A56A6;
     color: white;
-    font-size: 13px;
     font-weight: bold;
-}
 
+    width: 0%;
+
+    min-height: 32px;
+    line-height: 32px;
+
+    text-align: center;
+
+    transition: width 0.8s ease;
+}
 /* NOTIFICAÇÕES (substitui alerts) */
 
 .toast-notificacao {
