@@ -60,9 +60,9 @@ def create_ca():
     ).not_valid_after(
         datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=3650) #válido por 10 anos
     ).add_extension(
-        x509.BasicConstraints(ca=True, path_length=None),
+        x509.BasicConstraints(ca=True, path_length=None), #Extensão para ter permissão para assinar outros certificados.
         critical=True 
-    ).sign(ca_key, hashes.SHA256())
+    ).sign(ca_key, hashes.SHA256()) # Usa a chave privada da CA (com hash) para assinar o certificado 
 
 
     #guardar a chave privada e o certificado do CA em arquivos PEM
@@ -97,10 +97,10 @@ def issue_user_cert(ca_key, ca_cert, user_name):
         x509.NameAttribute(NameOID.COMMON_NAME, user_name),
     ])
 
-    #o emissor do certificado é o CA
+    #o emissor do certificado é a nossa CA 
     issuer = ca_cert.subject
 
-
+    #Certificado para os utilizadores
     cert = x509.CertificateBuilder().subject_name(
         subject
     ).issuer_name(
@@ -116,7 +116,7 @@ def issue_user_cert(ca_key, ca_cert, user_name):
     ).add_extension( #indica que é utilizador, não CA
         x509.BasicConstraints(ca=False, path_length=None),
         critical=True
-    ).sign(ca_key, hashes.SHA256())
+    ).sign(ca_key, hashes.SHA256()) #assinado com a chave privada da CA, podendo ser verificado com o certificado público/chave pública da CA 
 
     user_key_pem = user_key.private_bytes(
         encoding=serialization.Encoding.PEM,
@@ -131,16 +131,16 @@ def issue_user_cert(ca_key, ca_cert, user_name):
 ca_key_path = os.path.join(CA_DIR, "ca_key.pem")
 ca_cert_path = os.path.join(CA_DIR, "ca_cert.pem")
 
-if os.path.exists(ca_key_path) and os.path.exists(ca_cert_path):
+if os.path.exists(ca_key_path) and os.path.exists(ca_cert_path): # Para não ter de criar um certificado novo sempre que reinicia (e não iriam ser validados, por serem de CAs diferentes)
     with open(ca_key_path, "rb") as f:
-        ca_key = serialization.load_pem_private_key(f.read(), password=password)
+        ca_key = serialization.load_pem_private_key(f.read(), password=password) #Se existirem, lê a chave privada do ficheiro, decifrando-a com a password fornecida.
 
     with open(ca_cert_path, "rb") as f:
-        ca_cert = x509.load_pem_x509_certificate(f.read())
+        ca_cert = x509.load_pem_x509_certificate(f.read()) #lê o certificado da CA  
         print("CA carregada com sucesso")
 else:
     print("CA não encontrada, criando nova CA...")
-    ca_key, ca_cert = create_ca()
+    ca_key, ca_cert = create_ca()  #Se os ficheiros não forem encontrados, invoca a função para gerar uma CA
     print("Nova CA criada com sucesso")
 
 app = Flask(__name__)
@@ -148,12 +148,12 @@ app = Flask(__name__)
 @app.post("/sign")
 def sign():
     data = request.json
-    email = data["email"]
+    email = data["email"] 
 
-    key, cert = issue_user_cert(ca_key, ca_cert, email)
+    key, cert = issue_user_cert(ca_key, ca_cert, email) #cria o certificado para o utilizador com esses dados
 
     return jsonify({
-        "certificate": cert.decode(),
+        "certificate": cert.decode(), #Converte os bytes PEM para String, para enviar em JSON
         "privateKey": key.decode()
     })
 

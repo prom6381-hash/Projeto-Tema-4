@@ -37,7 +37,6 @@ app.use(express.json());
 
 const TOKEN_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutos
 
-// - Pedir token - login
 
 const sessoesVotar={}; // armazenar temporariamente as sessões de votação a ocorrerem
 
@@ -122,6 +121,7 @@ async function calculoChaveSessao(chavepub_remota){
 
     return JSON.parse(text);
 }
+
 function base64ParaPEM(base64,type){  //tive de fazer esta função pq ao votar estava a dar erro interno pq o servidor estava a compara um ficheiro pem com um base64(browser)
     const linhas= base64.match(/.{1,64}/g); // Estava a dar este erro--> ValueError: Unable to load PEM file. MalformedFraming
     const body= linhas.join('\n');
@@ -200,7 +200,7 @@ app.post("/login", loginLimiter, async (req, res) => {
             return res.status(401).json({ error: "Não autenticado" });
         }
         email = req.session.user.email;
-    } else {
+    } else { //se for criar conta ou iniciar sessão:
         email = req.body.email;
     }
     console.log("4. email:", email);
@@ -216,12 +216,12 @@ app.post("/login", loginLimiter, async (req, res) => {
 
     if (tokenType === "register") {
     console.log("REGISTO: existingUser.isVerified:", existingUser?.isVerified);
-    // Impede o registo se o utilizador já existir e estiver verificado
+    // Impede o registo se o utilizador já existir e estiver verificado 
     if (existingUser && existingUser.isVerified) {
         console.log("REGISTO: Utilizador já existe e está verificado");
         return res.status(400).json({ error: "Utilizador já existe" });
     }
-    // Remove utilizador não verificado para permitir novo registo
+    // Remove utilizador não verificado para permitir novo registo 
     if (existingUser) {
         console.log("REGISTO: Apagando utilizador não verificado");
         await User.deleteOne({ email });
@@ -267,7 +267,7 @@ app.post("/login", loginLimiter, async (req, res) => {
         }
     );
 //Envia o token em texto simples por email (o hash fica guardado na BD)
-        await sendTokenEmail(email, token);
+    await sendTokenEmail(email, token);
 
     return res.json({ message: "Token gerado e enviado" });
 });
@@ -388,9 +388,9 @@ app.post("/verify-token", async(req, res) => {  //async porque vamos usar await 
 app.post("/api/iniciar-votacao", async (req,res)=>{
     try{
 
-        console.log("SESSÃO:", req.session);           // para ver o que está a dar erro vvvv
-        console.log("USER:", req.session.user);        // ""
-        console.log("BODY:", req.body);                 //""
+        console.log("SESSÃO:", req.session);           // para ver o que está a dar erro 
+        console.log("USER:", req.session.user);        
+        console.log("BODY:", req.body);                
 
         const {chavepub_remota,assinatura}= req.body;
         if (!req.session || !req.session.user || !req.session.user.email){
@@ -411,6 +411,7 @@ app.post("/api/iniciar-votacao", async (req,res)=>{
         if (!user){
             return res.status(404).json({error:"Utilizador não foi encontrado!"});
         }
+        
         // Se não tiver chave RSA guardada, guarda a que veio do frontend
         if (!user.chavePublicaRSA && req.body.chavePublicaRSA) {
             user.chavePublicaRSA = req.body.chavePublicaRSA;
@@ -559,6 +560,7 @@ app.post("/api/votar", async(req,res)=>{
                 id_eleicao: idEleicao,
                 id_opcao: idOpcao
             });
+            
             await guardarVoto.save();
 
             // Marca o utilizador como tendo votado nesta eleição (para evitar duplo voto)

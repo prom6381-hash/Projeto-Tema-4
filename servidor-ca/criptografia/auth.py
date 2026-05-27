@@ -31,4 +31,4 @@ def verify_password(stored_hash, password, salt):
 
     key = kdf.derive(password.encode("utf-8"))
 
-    return base64.urlsafe_b64encode(key).decode() == stored_hash
+    return base64.urlsafe_b64encode(key).decode() == stored_hash #verificação

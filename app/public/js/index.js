@@ -94,7 +94,7 @@ async function criar_eleicao() {
         alert("Por favor, insira o nome da eleição.");
         return;
     }
-    const descricao = document.getElementById('descricao-eleicao')?.value?.trim() || null;
+    const descricao = document.getElementById('descricao-eleicao')?.value?.trim() || null; //é opcional
     const candidatos = [];
     const inputs = document.querySelectorAll('#lista-candidatos input[type="text"]');
     inputs.forEach(input => {
@@ -224,7 +224,7 @@ async function criar_eleicao() {
                 alert(data.error);
             }
         } catch (error) {
-    alert("Erro ao   a eleição. Tente novamente mais tarde.");
+    alert("Erro ao criar a eleição. Tente novamente mais tarde.");
 }
 }
 
@@ -488,7 +488,7 @@ function getQueryParams() {
 
 // VERIFICAR TOKEN
 async function verificar_token() {
-    const { tokenType } = getQueryParams();
+    const { tokenType } = getQueryParams(); //buscar ao endereço 
     const token = document.getElementById("token").value;
 
     if (!tokenType) {
@@ -556,6 +556,8 @@ async function criarSenha() {
         alert("As senhas não coincidem. Tente novamente.");
         return;
     }   
+
+    
     const passwordForte =
         /[A-Z]/.test(password) &&
         /[a-z]/.test(password) &&
@@ -567,6 +569,7 @@ async function criarSenha() {
         alert("A password não cumpre os requisitos de segurança.");
         return;
     }
+
     const chavepublicaRSA= await gerarChavesRSA();
     console.log("chavepublicaRSA gerada:", chavepublicaRSA ? "SIM" : "NÃO");
 
@@ -576,7 +579,7 @@ async function criarSenha() {
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email:email, password:password, chavePublicaRSA: chavepublicaRSA })
+        body: JSON.stringify({ email:email, password:password, chavePublicaRSA: chavepublicaRSA }) //chave pública do cliente
     });
 
     const data = await response.json();
@@ -589,7 +592,7 @@ async function criarSenha() {
     }
 }
 
-async function verificarforcasenha() {
+async function verificarforcasenha() { 
     
     const password = document.getElementById("password").value;
 
@@ -847,9 +850,9 @@ async function votar(){
     botaoEnviar.textContent = "A cifrar e enviar...";
     botaoEnviar.style.background = "#f39c12";
     botaoEnviar.disabled = true;    
-    
+     
     try{
-        const chavesECDH= await gerarchavesDH();
+        const chavesECDH= await gerarchavesDH(); //o par de chaves do utilizador
 
         const chaveprivadaRSABase64=localStorage.getItem("chave_Privada_RSA");
         if (!chaveprivadaRSABase64){
@@ -857,6 +860,7 @@ async function votar(){
             return;
         }
 
+        //Esta função converte os bytes da chave privada (que vieram do localStorage) num objeto criptográfico ativo em memória para permitir a assinatura do voto
         const chaveprivadaRSA= await crypto.subtle.importKey(
             "pkcs8",
             base64ParaArraybuffer(chaveprivadaRSABase64),
@@ -864,10 +868,11 @@ async function votar(){
                 hash:"SHA-256"
             },
             true,// mudei de false para true para a chave poder ser reexportada depois de importada, pq estava a dar erro ao tentar votar
-            ["sign"]
-        );
+            ["sign"] // "sign" restringe para apenas assinar, não podendo ser reutilizada para outras coisas
+        ); 
 
-        const assinatura=await assinaturaRSA(chavesECDH.chavePublica,chaveprivadaRSA);
+        const assinatura=await assinaturaRSA(chavesECDH.chavePublica, chaveprivadaRSA); 
+
         const respostaInicio=await fetch("/api/iniciar-votacao", {
             method: "POST",
             credentials: "include",
@@ -1342,3 +1347,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
+// titulo sumario figura breve descriçao das figuras e rendicaçoes 
