@@ -116,7 +116,8 @@ def issue_user_cert(ca_key, ca_cert, user_name):
     ).add_extension( #indica que é utilizador, não CA
         x509.BasicConstraints(ca=False, path_length=None),
         critical=True
-    ).sign(ca_key, hashes.SHA256()) #assinado com a chave privada da CA, podendo ser verificado com o certificado público/chave pública da CA 
+#assinado com a chave privada da CA, podendo ser verificado com o certificado público/chave pública da CA 
+    ).sign(ca_key, hashes.SHA256()) 
 
     user_key_pem = user_key.private_bytes(
         encoding=serialization.Encoding.PEM,

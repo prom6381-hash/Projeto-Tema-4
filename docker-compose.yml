@@ -11,9 +11,9 @@ services:
       - NODE_ENV=development
       - BACKEND_URL=http://backend:4000
     volumes:
-      - ./app/public:/app/public
+      - ./app/public:/app/public  #serve para, caso o sistema for interrompido, estejam guardados nessa pasta
     networks:
-      - network_sistema_todo
+      - network_sistema_todo # Para não precisar de saber o IP do contentor para aceder aos outros contentores
 
   backend:
     build:

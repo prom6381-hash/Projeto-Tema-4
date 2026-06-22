@@ -905,6 +905,7 @@ async function votar(){
             idOpcao,
             idEleicao
         );
+        
         console.log("Voto encriptado - iv:", votoEncriptado.iv.substring(0, 20) + "...");
         console.log("Voto encriptado - tag:", votoEncriptado.tag.substring(0, 20) + "...");
         console.log("Voto encriptado - votoCifrado:", votoEncriptado.votoCifrado.substring(0, 20) + "...");
@@ -1347,4 +1348,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-// titulo sumario figura breve descriçao das figuras e rendicaçoes 
